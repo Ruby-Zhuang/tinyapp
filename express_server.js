@@ -63,17 +63,23 @@ app.get("/u/:shortURL", (req, res) => {
 // POST REQUESTS --------------------------------------------
 /////////////////////////////////////////////////////////////
 
+// Handle the form submission to remove existing shortened URLs from database
+app.post("/urls/:shortURL/delete", (req, res) => {
+  delete urlDatabase[req.params.shortURL];
+  res.redirect(`/urls`);
+});
+
+// Handle the form submission to update existing shortened URLs in database
+app.post("/urls/:shortURL", (req, res) => {
+  urlDatabase[req.params.shortURL] = req.body.longURL;
+  res.redirect(`/urls/${req.params.shortURL}`);
+});
+
 // Handle the form submission to add the long URL to the database with an associated random short URL
 app.post("/urls", (req, res) => {
   const shortURL = generateRandomString();
   urlDatabase[shortURL] = req.body.longURL;
   res.redirect(`/urls/${shortURL}`);
-});
-
-// Handle the form submission to remove existing shortened URLs from our database
-app.post("/urls/:shortURL/delete", (req, res) => {
-  delete urlDatabase[req.params.shortURL];
-  res.redirect(`/urls`);
 });
 
 
