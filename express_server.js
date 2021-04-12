@@ -1,6 +1,6 @@
+const PORT = 8080;
 const express = require("express");
 const app = express();
-const PORT = 8080;
 
 app.set("view engine", "ejs");
 
@@ -18,7 +18,7 @@ app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
 
-// Pass all the URLs and their shortened forms
+// Display all the URLs and their shortened forms
 app.get("/urls", (req, res) => {
   const templateVars = { urls: urlDatabase };
   res.render("urls_index", templateVars);
