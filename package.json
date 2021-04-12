@@ -16,5 +16,8 @@
   "bugs": {
     "url": "https://github.com/Ruby-Zhuang/tinyapp/issues"
   },
-  "homepage": "https://github.com/Ruby-Zhuang/tinyapp#readme"
+  "homepage": "https://github.com/Ruby-Zhuang/tinyapp#readme",
+  "dependencies": {
+    "express": "^4.17.1"
+  }
 }
