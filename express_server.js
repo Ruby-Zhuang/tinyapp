@@ -1,3 +1,6 @@
+/////////////////////////////////////////////////////////////
+// CONSTANTS, SETUP & DEPENDENCIES -------------------------
+/////////////////////////////////////////////////////////////
 const PORT = 8080;
 const express = require("express");
 const bodyParser = require("body-parser");
@@ -6,16 +9,29 @@ const app = express();
 app.set("view engine", "ejs");
 app.use(bodyParser.urlencoded({extended: true}));
 
+/////////////////////////////////////////////////////////////
+// DATABASE -------------------------------------------------
+/////////////////////////////////////////////////////////////
+
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
 };
 
-// Generates a "unique" shortURL [0-9]
+/////////////////////////////////////////////////////////////
+// HELPER FUNCTIONS -----------------------------------------
+/////////////////////////////////////////////////////////////
+
+// Generates a "unique" shortURL [0-9 a-z]
 const generateRandomString = function() {
   return Math.floor((1 + Math.random()) * 0x1000000).toString(16).substring(1);
 };
 
+/////////////////////////////////////////////////////////////
+// GET REQUESTS ---------------------------------------------
+/////////////////////////////////////////////////////////////
+
+// Home route
 app.get("/", (req, res) => {
   res.send("Hello!");
 });
@@ -43,6 +59,10 @@ app.get("/u/:shortURL", (req, res) => {
   res.redirect(longURL);
 });
 
+/////////////////////////////////////////////////////////////
+// POST REQUESTS --------------------------------------------
+/////////////////////////////////////////////////////////////
+
 // Handle the form submission
 app.post("/urls", (req, res) => {
   const shortURL = generateRandomString();
@@ -50,6 +70,10 @@ app.post("/urls", (req, res) => {
   res.redirect(`/urls/${shortURL}`);
 });
 
+/////////////////////////////////////////////////////////////
+// SERVER FUNCTION ------------------------------------------
+/////////////////////////////////////////////////////////////
+
 app.listen(PORT, () => {
-  console.log(`App listening on port ${PORT}!`);
+  console.log(`TinyApp listening on port ${PORT}!`);
 });
