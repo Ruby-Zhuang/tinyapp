@@ -1,5 +1,5 @@
 /////////////////////////////////////////////////////////////
-// CONSTANTS, SETUP & DEPENDENCIES -------------------------
+// CONSTANTS, SETUP & DEPENDENCIES --------------------------
 /////////////////////////////////////////////////////////////
 const PORT = 8080;
 const express = require("express");
@@ -22,9 +22,10 @@ const urlDatabase = {
 // HELPER FUNCTIONS -----------------------------------------
 /////////////////////////////////////////////////////////////
 
-// Generates a "unique" shortURL [0-9 a-z]
-const generateRandomString = function() {
-  return Math.floor((1 + Math.random()) * 0x1000000).toString(16).substring(1);
+// Generates a new "unique" shortURL [0-9 a-z A-Z]
+const generateRandomString = (numCharacters) => {
+  const randomString = Math.random().toString(36).substring(2, numCharacters + 2);
+  return randomString;
 };
 
 /////////////////////////////////////////////////////////////
@@ -77,11 +78,12 @@ app.post("/urls/:shortURL", (req, res) => {
 
 // Handle the form submission to add the long URL to the database with an associated random short URL
 app.post("/urls", (req, res) => {
-  const shortURL = generateRandomString();
+  const shortURL = generateRandomString(6);
   urlDatabase[shortURL] = req.body.longURL;
+  // const templateVars = { shortURL, longURL: urlDatabase[shortURL] };
+  // res.render("urls_show", templateVars);
   res.redirect(`/urls/${shortURL}`);
 });
-
 
 /////////////////////////////////////////////////////////////
 // SERVER FUNCTION ------------------------------------------
