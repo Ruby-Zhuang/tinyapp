@@ -60,26 +60,34 @@ app.get("/u/:shortURL", (req, res) => {
 
 // READ: Display basic form page that allows user to submit URLs to be shortened
 app.get("/urls/new", (req, res) => {
-  res.render("urls_new");
+  const username = req.cookies.username;
+  const templateVars = {
+    username,
+  };
+  res.render("urls_new", templateVars);
 });
-
-// READ: Display the form submission to update a specific existing shortened URL in database
-// app.get("/urls/:shortURL/update", (req, res) => {
-//   const shortURL = req.params.shortURL;
-//   res.redirect(`/urls/${shortURL}`);
-// });
 
 // READ: Display a single URL and its shortened form along with a form to update a specific existing shortened URL in database
 app.get("/urls/:shortURL", (req, res) => {
+  const username = req.cookies.username;
   const shortURL = req.params.shortURL;
   const longURL = urlDatabase[req.params.shortURL];
-  const templateVars = { shortURL, longURL };
+  const templateVars = {
+    username,
+    shortURL,
+    longURL
+  };
   res.render("urls_show", templateVars);
 });
 
 // READ: Display all the URLs and their shortened forms
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase };
+  // const templateVars = { urls: urlDatabase };
+  const username = req.cookies.username;
+  const templateVars = {
+    username,
+    urls: urlDatabase
+  };
   res.render("urls_index", templateVars);
 });
 
@@ -109,6 +117,12 @@ app.post("/urls", (req, res) => {
 app.post("/login", (req, res) => {
   const username = req.body.username;
   res.cookie('username', username);
+  res.redirect(`/urls`);
+});
+
+// CREATE/POST: Handle user logout and clear cookies
+app.post("/logout", (req, res) => {
+  res.clearCookie('username');
   res.redirect(`/urls`);
 });
 
