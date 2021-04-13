@@ -47,10 +47,10 @@ const generateRandomString = (numCharacters) => {
     randomString += randomChar;
   }
 
-  // Recursive case if randomString already exists as a shortURL in the database
-  if (urlDatabase[randomString]) {
-    generateRandomString(numCharacters);
-  }
+  // // Recursive case if randomString already exists as a shortURL in the database
+  // if (urlDatabase[randomString]) {
+  //   generateRandomString(numCharacters);
+  // }
 
   return randomString;
 };
@@ -70,7 +70,6 @@ app.get("/", (req, res) => {
 
 // READ: Display all the URLs and their shortened forms
 app.get("/urls", (req, res) => {
-  // const templateVars = { urls: urlDatabase };
   const username = req.cookies.username;
   const templateVars = {
     username,
@@ -108,9 +107,9 @@ app.get("/u/:shortURL", (req, res) => {
   res.redirect(longURL);
 });
 
-// READ:
+// READ: Display registration form
 app.get("/register", (req, res) => {
-  const username = req.body.username;
+  const username = req.cookies.username;
   res.cookie('username', username);
   const templateVars = {
     username,
@@ -147,6 +146,21 @@ app.post("/urls/:shortURL", (req, res) => {
 app.post("/login", (req, res) => {
   const username = req.body.username;
   res.cookie('username', username);
+  res.redirect(`/urls`);
+});
+
+// CREATE/POST: Handle registration form data
+app.post("/register", (req, res) => {
+  const newUserID = generateRandomString(6);
+  const email = req.body.email;
+  const password = req.body.password;
+  users[newUserID] = {
+    id: newUserID,
+    email,
+    password
+  };
+  console.log(users);
+  res.cookie('user_id', newUserID);
   res.redirect(`/urls`);
 });
 
