@@ -51,11 +51,20 @@ const generateRandomString = (numCharacters) => {
 // GET REQUESTS ---------------------------------------------
 /////////////////////////////////////////////////////////////
 
-// READ: Redirect any request to "/u/:shortURL" to its longURL
-app.get("/u/:shortURL", (req, res) => {
-  const shortURL = req.params.shortURL;
-  const longURL = urlDatabase[shortURL];
-  res.redirect(longURL);
+// READ: Redirect to display all the URLs if user goes to root
+app.get("/", (req, res) => {
+  res.redirect(`/urls`);
+});
+
+// READ: Display all the URLs and their shortened forms
+app.get("/urls", (req, res) => {
+  // const templateVars = { urls: urlDatabase };
+  const username = req.cookies.username;
+  const templateVars = {
+    username,
+    urls: urlDatabase
+  };
+  res.render("urls_index", templateVars);
 });
 
 // READ: Display basic form page that allows user to submit URLs to be shortened
@@ -80,20 +89,11 @@ app.get("/urls/:shortURL", (req, res) => {
   res.render("urls_show", templateVars);
 });
 
-// READ: Display all the URLs and their shortened forms
-app.get("/urls", (req, res) => {
-  // const templateVars = { urls: urlDatabase };
-  const username = req.cookies.username;
-  const templateVars = {
-    username,
-    urls: urlDatabase
-  };
-  res.render("urls_index", templateVars);
-});
-
-// READ: Redirect to display all the URLs if user goes to root
-app.get("/", (req, res) => {
-  res.redirect(`/urls`);
+// READ: Redirect any request to "/u/:shortURL" to its longURL
+app.get("/u/:shortURL", (req, res) => {
+  const shortURL = req.params.shortURL;
+  const longURL = urlDatabase[shortURL];
+  res.redirect(longURL);
 });
 
 // READ: For development purposes - JSON string representing the entire urlDatabase object
@@ -113,6 +113,14 @@ app.post("/urls", (req, res) => {
   res.redirect(`/urls/${shortURL}`);
 });
 
+// UPDATE/PUT: Handle the update request from the home page
+app.post("/urls/:shortURL", (req, res) => {
+  const shortURL = req.params.shortURL;
+  const longURL = req.body.longURL;
+  urlDatabase[shortURL] = longURL;
+  res.redirect(`/urls`);
+});
+
 // CREATE/POST: Handle user login and set a cookie with the username
 app.post("/login", (req, res) => {
   const username = req.body.username;
@@ -123,14 +131,6 @@ app.post("/login", (req, res) => {
 // CREATE/POST: Handle user logout and clear cookies
 app.post("/logout", (req, res) => {
   res.clearCookie('username');
-  res.redirect(`/urls`);
-});
-
-// UPDATE/PUT: Handle the update request from the home page
-app.post("/urls/:shortURL", (req, res) => {
-  const shortURL = req.params.shortURL;
-  const longURL = req.body.longURL;
-  urlDatabase[shortURL] = longURL;
   res.redirect(`/urls`);
 });
 
