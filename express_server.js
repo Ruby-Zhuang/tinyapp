@@ -1,3 +1,4 @@
+/* eslint-disable camelcase */
 /////////////////////////////////////////////////////////////
 // CONSTANTS, SETUP & DEPENDENCIES --------------------------
 /////////////////////////////////////////////////////////////
@@ -70,9 +71,9 @@ app.get("/", (req, res) => {
 
 // READ: Display all the URLs and their shortened forms
 app.get("/urls", (req, res) => {
-  const username = req.cookies.username;
+  const user_id = req.cookies.user_id;
   const templateVars = {
-    username,
+    user: users[user_id],
     urls: urlDatabase
   };
   res.render("urls_index", templateVars);
@@ -80,20 +81,20 @@ app.get("/urls", (req, res) => {
 
 // READ: Display basic form page that allows user to submit URLs to be shortened
 app.get("/urls/new", (req, res) => {
-  const username = req.cookies.username;
+  const user_id = req.cookies.user_id;
   const templateVars = {
-    username,
+    user: users[user_id],
   };
   res.render("urls_new", templateVars);
 });
 
 // READ: Display a single URL and its shortened form along with a form to update a specific existing shortened URL in database
 app.get("/urls/:shortURL", (req, res) => {
-  const username = req.cookies.username;
+  const user_id = req.cookies.user_id;
   const shortURL = req.params.shortURL;
   const longURL = urlDatabase[req.params.shortURL];
   const templateVars = {
-    username,
+    user: users[user_id],
     shortURL,
     longURL
   };
@@ -109,10 +110,10 @@ app.get("/u/:shortURL", (req, res) => {
 
 // READ: Display registration form
 app.get("/register", (req, res) => {
-  const username = req.cookies.username;
-  res.cookie('username', username);
+  const user_id = req.cookies.user_id;
+  res.cookie('user_id', user_id);
   const templateVars = {
-    username,
+    user: users[user_id],
   };
   res.render("register", templateVars);
 });
@@ -142,10 +143,10 @@ app.post("/urls/:shortURL", (req, res) => {
   res.redirect(`/urls`);
 });
 
-// CREATE/POST: Handle user login and set a cookie with the username
+// CREATE/POST: Handle user login and set a cookie with the user_id
 app.post("/login", (req, res) => {
-  const username = req.body.username;
-  res.cookie('username', username);
+  const user_id = req.body.user_id;
+  res.cookie('user_id', user_id);
   res.redirect(`/urls`);
 });
 
@@ -166,7 +167,7 @@ app.post("/register", (req, res) => {
 
 // CREATE/POST: Handle user logout and clear cookies
 app.post("/logout", (req, res) => {
-  res.clearCookie('username');
+  res.clearCookie('user_id');
   res.redirect(`/urls`);
 });
 
