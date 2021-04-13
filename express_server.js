@@ -96,6 +96,16 @@ app.get("/u/:shortURL", (req, res) => {
   res.redirect(longURL);
 });
 
+// READ:
+app.get("/register", (req, res) => {
+  const username = req.body.username;
+  res.cookie('username', username);
+  const templateVars = {
+    username,
+  };
+  res.render("register", templateVars);
+});
+
 // READ: For development purposes - JSON string representing the entire urlDatabase object
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
