@@ -9,6 +9,7 @@ const app = express();
 
 app.set("view engine", "ejs");
 app.use(bodyParser.urlencoded({extended: true}));
+app.use(cookieParser());
 
 /////////////////////////////////////////////////////////////
 // DATABASE -------------------------------------------------
@@ -102,6 +103,13 @@ app.post("/urls", (req, res) => {
   const longURL = req.body.longURL;
   urlDatabase[shortURL] = longURL;
   res.redirect(`/urls/${shortURL}`);
+});
+
+// CREATE/POST: Handle user login and set a cookie with the username
+app.post("/login", (req, res) => {
+  const username = req.body.username;
+  res.cookie('username', username);
+  res.redirect(`/urls`);
 });
 
 // UPDATE/PUT: Handle the update request from the home page
