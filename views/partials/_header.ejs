@@ -13,7 +13,7 @@
     </div>
     <% if (user) { %> 
       <form class="form-inline" method="POST" action="/logout">
-        <span class="navbar-text mr-sm-2 text-light">Logged in as: <strong><%= user.email %></strong></span>
+        <span class="navbar-text mr-sm-2">Logged in as: <strong class="text-light"><%= user.email %></strong></span>
         <button class="btn btn-outline-light my-2 my-sm-0" type="submit">Logout <i class="fas fa-sign-out-alt"></i></button>
       </form>
     <% } else { %>
