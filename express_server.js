@@ -104,6 +104,12 @@ app.get("/urls", (req, res) => {
 // Needs to be before /urls/:shortURL endpoint otherwise Express will think new is a route parameter
 app.get("/urls/new", (req, res) => {
   const user_id = req.cookies.user_id;
+
+  if (!user_id || user_id === "undefined") {    // last condition here has something to do with login route, may need to update
+    res.redirect(`/urls`);
+    return;
+  }
+
   const templateVars = {
     user: users[user_id],
   };
