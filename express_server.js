@@ -23,17 +23,17 @@ const users = {
   "userRandomID": {
     id: "userRandomID",
     email: "user@example.com",
-    password: "purple-monkey-dinosaur"
+    password: bcrypt.hashSync("purple-monkey-dinosaur", saltRounds)
   },
   "user2RandomID": {
     id: "user2RandomID",
     email: "user2@example.com",
-    password: "dishwasher-funk"
+    password: bcrypt.hashSync("dishwasher-funk", saltRounds)
   },
   "aJ48lW": {
     id: "aJ48lW",
     email: "user3@example.com",
-    password: "123456"
+    password: bcrypt.hashSync("123456", saltRounds)
   }
 };
 
@@ -264,7 +264,8 @@ app.post("/login", (req, res) => {
   }
 
   // Authenticate: error if email exists, but passwords don't match
-  if (password !== user.password) {
+  const hashedPassword = user.password;
+  if (!bcrypt.compareSync(password, hashedPassword)) {
     res.status(403);
     const templateVars = {
       user: null,
@@ -284,6 +285,7 @@ app.post("/login", (req, res) => {
 app.post("/register", (req, res) => {
   const newUserID = generateRandomString(6);
   const { email, password } = req.body;
+  const hashedPassword = bcrypt.hashSync(password, saltRounds);
 
   // Authenticate: error if either email or password fields are empty
   if (email === '' || password === '') {
@@ -315,7 +317,7 @@ app.post("/register", (req, res) => {
   users[newUserID] = {
     id: newUserID,
     email,
-    password
+    password: hashedPassword
   };
   res.cookie('user_id', newUserID);
   res.redirect(`/urls`);
