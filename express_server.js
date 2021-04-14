@@ -27,6 +27,11 @@ const users = {
     id: "user2RandomID",
     email: "user2@example.com",
     password: "dishwasher-funk"
+  },
+  "aJ48lW": {
+    id: "aJ48lW",
+    email: "user3@example.com",
+    password: "123456"
   }
 };
 
@@ -38,13 +43,16 @@ const urlDatabase = {
   i3BoGr: {
     longURL: "https://www.google.ca",
     userID: "aJ48lW"
+  },
+  b2xVn2: {
+    longURL: "http://www.lighthouselabs.ca",
+    userID: "userRandomID"
+  },
+  sgq3y6: {
+    longURL: "http://www.lighthouselabs.ca",
+    userID: "userRandomID"
   }
 };
-
-// const urlDatabase = {
-//   "b2xVn2": "http://www.lighthouselabs.ca",
-//   "9sm5xK": "http://www.google.com"
-// };
 
 /////////////////////////////////////////////////////////////
 // HELPER FUNCTIONS -----------------------------------------
@@ -88,9 +96,25 @@ const getUserByEmail = (email) => {
   }
 };
 
+// Returns the URLs where the userID is equal to the id of the currently logged-in user.
+const urlsForUser = (id) => {
+  const userURLs = {};
+
+  for (const shortURL in urlDatabase) {
+    const { userID, longURL} = urlDatabase[shortURL];
+    if (userID === id) {
+      userURLs[shortURL] = longURL;
+    }
+  }
+
+  return userURLs;
+};
+
 // Possible helper functions to improve readiblility
 // createNewUser/validateRegister (email, password) => (error, data)
 // validateLogin (email, password) => (error, data)
+// Refactor checkEmail exists
+// If have time, test for http and https prefixes
 
 
 /////////////////////////////////////////////////////////////
@@ -105,10 +129,12 @@ app.get("/", (req, res) => {
 // READ: Display all the URLs and their shortened forms
 app.get("/urls", (req, res) => {
   const user_id = req.cookies.user_id;
+  const userURLs = urlsForUser(user_id);
   const templateVars = {
     user: users[user_id],
-    urls: urlDatabase
+    urls: userURLs
   };
+  //console.log(templateVars);
   res.render("urls_index", templateVars);
 });
 
@@ -150,20 +176,22 @@ app.get("/u/:shortURL", (req, res) => {
 
 // READ: Display registration form
 app.get("/register", (req, res) => {
-  const user_id = req.cookies.user_id;
-  res.cookie('user_id', user_id);
+  //const user_id = req.cookies.user_id; // NEED TO CHECK IF USER IS LOGGED IN ALREADY
+  //res.cookie('user_id', user_id);
   const templateVars = {
-    user: users[user_id],
+    //user: users[user_id]
+    user: null
   };
   res.render("register", templateVars);
 });
 
 // READ: Display login form
 app.get("/login", (req, res) => {
-  const user_id = req.cookies.user_id;
-  res.cookie('user_id', user_id);
+  //const user_id = req.cookies.user_id;
+  //res.cookie('user_id', user_id);
   const templateVars = {
-    user: users[user_id],
+    //user: users[user_id]
+    user: null
   };
   res.render("login", templateVars);
 });
@@ -204,7 +232,7 @@ app.post("/urls/:shortURL", (req, res) => {
 // CREATE/POST: Handle user login and set a cookie with the user_id
 app.post("/login", (req, res) => {
   const { email, password } = req.body;
-  let user_id = req.cookies.user_id;    // Need to update this
+  let user_id = req.cookies.user_id;    // Need to update this because we shouldn't need this if user isn't logged in?
 
   // Authenticate: error if either email or password fields are empty
   if (email === '' || password === '') {
