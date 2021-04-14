@@ -9,7 +9,9 @@ const cookieParser = require('cookie-parser');
 const app = express();
 
 app.set("view engine", "ejs");
-app.use(bodyParser.urlencoded({extended: true}));
+app.use(bodyParser.urlencoded({
+  extended: true
+}));
 app.use(cookieParser());
 
 /////////////////////////////////////////////////////////////
@@ -56,6 +58,15 @@ const generateRandomString = (numCharacters) => {
   return randomString;
 };
 
+// Check if an email exists in the user database
+const checkEmailExists = (email) => {
+  for (const userID in users) {
+    if (users[userID].email === email) {
+      return true;
+    }
+  }
+  return false;
+};
 // Possible helper functions to improve readiblility
 // addNewURL
 // updateURL
@@ -155,12 +166,39 @@ app.post("/register", (req, res) => {
   const newUserID = generateRandomString(6);
   const email = req.body.email;
   const password = req.body.password;
+
+  if (email === '' || password === '') {
+    //res.status(400).send("<div><h1>Error!</h1><p>Invalid email and password.</p></div>");
+    res.status(400);
+    const user_id = req.cookies.user_id;
+    const templateVars = {
+      user: users[user_id],
+      statusCode: "400",
+      message: "Invalid email and/or password"
+    };
+    res.render("error", templateVars);
+    return;
+  }
+
+  const emailExists = checkEmailExists(email);
+  if (emailExists) {
+    //res.status(400).send("<div><h1>Error!</h1><p>This email address is already being used</p></div>");
+    res.status(400);
+    const user_id = req.cookies.user_id;
+    const templateVars = {
+      user: users[user_id],
+      statusCode: "400",
+      message: "This email address is already being used"
+    };
+    res.render("error", templateVars);
+    return;
+  }
+  
   users[newUserID] = {
     id: newUserID,
     email,
     password
   };
-  console.log(users);
   res.cookie('user_id', newUserID);
   res.redirect(`/urls`);
 });
