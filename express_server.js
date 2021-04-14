@@ -31,9 +31,20 @@ const users = {
 };
 
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  b6UTxQ: {
+    longURL: "https://www.tsn.ca",
+    userID: "aJ48lW"
+  },
+  i3BoGr: {
+    longURL: "https://www.google.ca",
+    userID: "aJ48lW"
+  }
 };
+
+// const urlDatabase = {
+//   "b2xVn2": "http://www.lighthouselabs.ca",
+//   "9sm5xK": "http://www.google.com"
+// };
 
 /////////////////////////////////////////////////////////////
 // HELPER FUNCTIONS -----------------------------------------
@@ -78,8 +89,9 @@ const getUserByEmail = (email) => {
 };
 
 // Possible helper functions to improve readiblility
-// addNewURL
-// updateURL
+// createNewUser/validateRegister (email, password) => (error, data)
+// validateLogin (email, password) => (error, data)
+
 
 /////////////////////////////////////////////////////////////
 // GET REQUESTS ---------------------------------------------
@@ -120,7 +132,7 @@ app.get("/urls/new", (req, res) => {
 app.get("/urls/:shortURL", (req, res) => {
   const user_id = req.cookies.user_id;
   const shortURL = req.params.shortURL;
-  const longURL = urlDatabase[req.params.shortURL];
+  const longURL = urlDatabase[shortURL].longURL;
   const templateVars = {
     user: users[user_id],
     shortURL,
@@ -132,7 +144,7 @@ app.get("/urls/:shortURL", (req, res) => {
 // READ: Redirect any request to "/u/:shortURL" to its longURL
 app.get("/u/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
-  const longURL = urlDatabase[shortURL];
+  const longURL = urlDatabase[shortURL].longURL;
   res.redirect(longURL);
 });
 
@@ -161,15 +173,23 @@ app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
 
+// READ: For development purposes - JSON string representing the entire users object
+app.get("/users.json", (req, res) => {
+  res.json(users);
+});
+
 /////////////////////////////////////////////////////////////
 // POST REQUESTS --------------------------------------------
 /////////////////////////////////////////////////////////////
 
-// CREATE/POST: Handle the form submission to add the long URL to the database with an associated random short URL
+// CREATE/POST: Handle the form submission to add the long URL to the database with an associated random shortURL and the current user
 app.post("/urls", (req, res) => {
   const shortURL = generateRandomString(6);
   const longURL = req.body.longURL;
-  urlDatabase[shortURL] = longURL;
+  const user_id = req.cookies.user_id;
+  
+  urlDatabase[shortURL] = { longURL, userID: user_id};
+  //urlDatabase[shortURL].longURL = longURL;
   res.redirect(`/urls/${shortURL}`);
 });
 
@@ -177,16 +197,16 @@ app.post("/urls", (req, res) => {
 app.post("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
   const longURL = req.body.longURL;
-  urlDatabase[shortURL] = longURL;
+  urlDatabase[shortURL].longURL = longURL;
   res.redirect(`/urls`);
 });
 
 // CREATE/POST: Handle user login and set a cookie with the user_id
 app.post("/login", (req, res) => {
-  const email = req.body.email;
-  const password = req.body.password;
-  let user_id = req.cookies.user_id;
+  const { email, password } = req.body;
+  let user_id = req.cookies.user_id;    // Need to update this
 
+  // Authenticate: error if either email or password fields are empty
   if (email === '' || password === '') {
     res.status(400);
     const templateVars = {
@@ -198,6 +218,7 @@ app.post("/login", (req, res) => {
     return;
   }
 
+  // Authenticate: error if email doesn't exist
   const emailExists = checkEmailExists(email);
   if (!emailExists) {
     res.status(403);
@@ -210,6 +231,7 @@ app.post("/login", (req, res) => {
     return;
   }
 
+  // Authenticate: error if email exists, but passwords don't match
   const user = getUserByEmail(email);
   if (password !== user.password) {
     res.status(403);
@@ -231,8 +253,7 @@ app.post("/login", (req, res) => {
 // CREATE/POST: Handle registration form data
 app.post("/register", (req, res) => {
   const newUserID = generateRandomString(6);
-  const email = req.body.email;
-  const password = req.body.password;
+  const { email, password } = req.body;
 
   if (email === '' || password === '') {
     res.status(400);
@@ -248,7 +269,6 @@ app.post("/register", (req, res) => {
 
   const emailExists = checkEmailExists(email);
   if (emailExists) {
-    //res.status(400).send("<div><h1>Error!</h1><p>This email address is already being used</p></div>");
     res.status(400);
     const user_id = req.cookies.user_id;
     const templateVars = {
