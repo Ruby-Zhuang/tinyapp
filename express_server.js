@@ -67,6 +67,16 @@ const checkEmailExists = (email) => {
   }
   return false;
 };
+
+// Get user by email
+const getUserByEmail = (email) => {
+  for (const userID in users) {
+    if (users[userID].email === email) {
+      return users[userID];
+    }
+  }
+};
+
 // Possible helper functions to improve readiblility
 // addNewURL
 // updateURL
@@ -91,6 +101,7 @@ app.get("/urls", (req, res) => {
 });
 
 // READ: Display basic form page that allows user to submit URLs to be shortened
+// Needs to be before /urls/:shortURL endpoint otherwise Express will think new is a route parameter
 app.get("/urls/new", (req, res) => {
   const user_id = req.cookies.user_id;
   const templateVars = {
@@ -166,7 +177,47 @@ app.post("/urls/:shortURL", (req, res) => {
 
 // CREATE/POST: Handle user login and set a cookie with the user_id
 app.post("/login", (req, res) => {
-  const user_id = req.body.user_id;
+  const email = req.body.email;
+  const password = req.body.password;
+  let user_id = req.cookies.user_id;
+
+  if (email === '' || password === '') {
+    res.status(400);
+    const templateVars = {
+      user: users[user_id],
+      statusCode: "400",
+      message: "Invalid email and/or password."
+    };
+    res.render("error", templateVars);
+    return;
+  }
+
+  const emailExists = checkEmailExists(email);
+  if (!emailExists) {
+    res.status(403);
+    const templateVars = {
+      user: users[user_id],
+      statusCode: "403",
+      message: "Your email is currently not registered with us."
+    };
+    res.render("error", templateVars);
+    return;
+  }
+
+  const user = getUserByEmail(email);
+  if (password !== user.password) {
+    res.status(403);
+    const templateVars = {
+      user: users[user_id],
+      statusCode: "403",
+      message: "Incorrect email or password."
+    };
+    res.render("error", templateVars);
+    return;
+  }
+
+  // If everything is valid for login
+  user_id = user.id;
   res.cookie('user_id', user_id);
   res.redirect(`/urls`);
 });
@@ -178,13 +229,12 @@ app.post("/register", (req, res) => {
   const password = req.body.password;
 
   if (email === '' || password === '') {
-    //res.status(400).send("<div><h1>Error!</h1><p>Invalid email and password.</p></div>");
     res.status(400);
     const user_id = req.cookies.user_id;
     const templateVars = {
       user: users[user_id],
       statusCode: "400",
-      message: "Invalid email and/or password"
+      message: "Invalid email and/or password."
     };
     res.render("error", templateVars);
     return;
@@ -198,12 +248,13 @@ app.post("/register", (req, res) => {
     const templateVars = {
       user: users[user_id],
       statusCode: "400",
-      message: "This email address is already being used"
+      message: "This email address is already being used."
     };
     res.render("error", templateVars);
     return;
   }
 
+  // If everything is valid for registration
   users[newUserID] = {
     id: newUserID,
     email,
