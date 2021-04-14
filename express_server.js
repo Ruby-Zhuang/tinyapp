@@ -77,16 +77,6 @@ const generateRandomString = (numCharacters) => {
   return randomString;
 };
 
-// Check if an email exists in the user database
-const checkEmailExists = (email) => {
-  for (const userID in users) {
-    if (users[userID].email === email) {
-      return true;
-    }
-  }
-  return false;
-};
-
 // Get user by email
 const getUserByEmail = (email) => {
   for (const userID in users) {
@@ -94,6 +84,7 @@ const getUserByEmail = (email) => {
       return users[userID];
     }
   }
+  return null;
 };
 
 // Returns the URLs where the userID is equal to the id of the currently logged-in user.
@@ -176,10 +167,14 @@ app.get("/u/:shortURL", (req, res) => {
 
 // READ: Display registration form
 app.get("/register", (req, res) => {
-  //const user_id = req.cookies.user_id; // NEED TO CHECK IF USER IS LOGGED IN ALREADY
-  //res.cookie('user_id', user_id);
+  const user_id = req.cookies.user_id; // NEED TO CHECK IF USER IS LOGGED IN ALREADY
+
+  if (user_id) {
+    res.redirect(`/urls`);
+    return;
+  }
+
   const templateVars = {
-    //user: users[user_id]
     user: null
   };
   res.render("register", templateVars);
@@ -187,10 +182,14 @@ app.get("/register", (req, res) => {
 
 // READ: Display login form
 app.get("/login", (req, res) => {
-  //const user_id = req.cookies.user_id;
-  //res.cookie('user_id', user_id);
+  const user_id = req.cookies.user_id;
+
+  if (user_id) {
+    res.redirect(`/urls`);
+    return;
+  }
+
   const templateVars = {
-    //user: users[user_id]
     user: null
   };
   res.render("login", templateVars);
@@ -217,28 +216,31 @@ app.post("/urls", (req, res) => {
   const user_id = req.cookies.user_id;
   
   urlDatabase[shortURL] = { longURL, userID: user_id};
-  //urlDatabase[shortURL].longURL = longURL;
   res.redirect(`/urls/${shortURL}`);
 });
 
 // UPDATE/PUT: Handle the update request from the home page
 app.post("/urls/:shortURL", (req, res) => {
+  const user_id = req.cookies.user_id;
   const shortURL = req.params.shortURL;
   const longURL = req.body.longURL;
-  urlDatabase[shortURL].longURL = longURL;
+
+  if (user_id) {
+    urlDatabase[shortURL].longURL = longURL;
+  }
+
   res.redirect(`/urls`);
 });
 
 // CREATE/POST: Handle user login and set a cookie with the user_id
 app.post("/login", (req, res) => {
   const { email, password } = req.body;
-  let user_id = req.cookies.user_id;    // Need to update this because we shouldn't need this if user isn't logged in?
 
   // Authenticate: error if either email or password fields are empty
   if (email === '' || password === '') {
     res.status(400);
     const templateVars = {
-      user: users[user_id],
+      user: null,
       statusCode: "400",
       message: "Invalid email and/or password."
     };
@@ -246,12 +248,12 @@ app.post("/login", (req, res) => {
     return;
   }
 
-  // Authenticate: error if email doesn't exist
-  const emailExists = checkEmailExists(email);
-  if (!emailExists) {
+  // Authenticate: error if email doesn't exist (meaning a user with the email isn't found)
+  const user = getUserByEmail(email);
+  if (!user) {
     res.status(403);
     const templateVars = {
-      user: users[user_id],
+      user: null,
       statusCode: "403",
       message: "Your email is currently not registered with us."
     };
@@ -260,21 +262,19 @@ app.post("/login", (req, res) => {
   }
 
   // Authenticate: error if email exists, but passwords don't match
-  const user = getUserByEmail(email);
   if (password !== user.password) {
     res.status(403);
     const templateVars = {
-      user: users[user_id],
+      user: null,
       statusCode: "403",
-      message: "Incorrect email or password."
+      message: "Incorrect email and/or password."
     };
     res.render("error", templateVars);
     return;
   }
 
   // If everything is valid for login
-  user_id = user.id;
-  res.cookie('user_id', user_id);
+  res.cookie('user_id', user.id);
   res.redirect(`/urls`);
 });
 
@@ -283,11 +283,12 @@ app.post("/register", (req, res) => {
   const newUserID = generateRandomString(6);
   const { email, password } = req.body;
 
+  // Authenticate: error if either email or password fields are empty
   if (email === '' || password === '') {
+    //res.status(400).send("Error message here");
     res.status(400);
-    const user_id = req.cookies.user_id;
     const templateVars = {
-      user: users[user_id],
+      user: null,
       statusCode: "400",
       message: "Invalid email and/or password."
     };
@@ -295,12 +296,12 @@ app.post("/register", (req, res) => {
     return;
   }
 
-  const emailExists = checkEmailExists(email);
-  if (emailExists) {
+  // Authenticate: error if email already exist (meaning a user was found in the database for that email entered)
+  const user = getUserByEmail(email);
+  if (user) {
     res.status(400);
-    const user_id = req.cookies.user_id;
     const templateVars = {
-      user: users[user_id],
+      user: null,
       statusCode: "400",
       message: "This email address is already being used."
     };
@@ -326,8 +327,13 @@ app.post("/logout", (req, res) => {
 
 // DELETE/DELETE: Handle the form submission to remove a specific existing shortened URL from database
 app.post("/urls/:shortURL/delete", (req, res) => {
+  const user_id = req.cookies.user_id;
   const shortURL = req.params.shortURL;
-  delete urlDatabase[shortURL];
+
+  if (user_id) {
+    delete urlDatabase[shortURL];
+  }
+
   res.redirect(`/urls`);
 });
 
