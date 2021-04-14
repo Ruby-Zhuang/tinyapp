@@ -129,6 +129,16 @@ app.get("/register", (req, res) => {
   res.render("register", templateVars);
 });
 
+// READ: Display login form
+app.get("/login", (req, res) => {
+  const user_id = req.cookies.user_id;
+  res.cookie('user_id', user_id);
+  const templateVars = {
+    user: users[user_id],
+  };
+  res.render("login", templateVars);
+});
+
 // READ: For development purposes - JSON string representing the entire urlDatabase object
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
@@ -193,7 +203,7 @@ app.post("/register", (req, res) => {
     res.render("error", templateVars);
     return;
   }
-  
+
   users[newUserID] = {
     id: newUserID,
     email,

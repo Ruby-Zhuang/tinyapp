@@ -14,13 +14,11 @@
     <% if (user) { %> 
       <form class="form-inline" method="POST" action="/logout">
         <span class="navbar-text mr-sm-2 text-light">Logged in as: <strong><%= user.email %></strong></span>
-        <button class="btn btn-outline-light my-2 my-sm-0" type="submit">Logout</button>
+        <button class="btn btn-outline-light my-2 my-sm-0" type="submit">Logout <i class="fas fa-sign-out-alt"></i></button>
       </form>
     <% } else { %>
-      <form class="form-inline" method="POST" action="/login">
-        <input class="form-control mr-sm-2" type="text" name="username" placeholder="Username">
-        <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Login</button>
-      </form>
+      <a class="nav-item nav-link text-light" href="/login">Login <i class="fas fa-sign-in-alt"></i></a>
+      <a class="nav-item nav-link text-light" href="/register">Register <i class="fas fa-user-plus"></i></a>
     <% } %> 
   </nav>
 </header>
