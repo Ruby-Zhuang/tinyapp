@@ -8,7 +8,7 @@ const cookieSession = require('cookie-session');
 const bcrypt = require('bcrypt');
 const saltRounds = 10;
 const methodOverride = require('method-override');
-const { generateRandomString, getUserByEmail, urlsForUser, validateLogin } = require('./helpers');
+const { generateRandomString, urlsForUser, validateLogin, validateRegister} = require('./helpers');
 
 /////////////////////////////////////////////////////////////
 // APP & MIDDLEWARE USE -------------------------------------
@@ -257,43 +257,19 @@ app.post("/login", (req, res) => {
 
 // CREATE/POST: Handle registration form data
 app.post("/register", (req, res) => {
-  const newUserID = generateRandomString(6, urlDatabase, users);
   const { email, password } = req.body;
-  const hashedPassword = bcrypt.hashSync(password, saltRounds);
-
-  // Authenticate: error if either email or password fields are empty
-  if (email === '' || password === '') {
-    res.status(400);
-    const templateVars = {
-      user: null,
-      statusCode: "400",
-      message: "Invalid email and/or password."
-    };
+  
+  // Validate login and display error if there is one
+  const { error, data } = validateRegister(email, password, users, urlDatabase);
+  if (error) {
+    const templateVars = { error, user: null };
+    res.status(error.statusCode);
     res.render("error", templateVars);
     return;
   }
-
-  // Authenticate: error if email already exist (meaning a user was found in the database for that email entered)
-  const user = getUserByEmail(email, users);
-  if (user) {
-    res.status(400);
-    const templateVars = {
-      user: null,
-      statusCode: "400",
-      message: "This email address is already being used."
-    };
-    res.render("error", templateVars);
-    return;
-  }
-
+  
   // If everything is valid for registration
-  users[newUserID] = {
-    id: newUserID,
-    email,
-    password: hashedPassword
-  };
-
-  req.session['user_id'] = newUserID;
+  req.session['user_id'] = data.id;
   res.redirect(`/urls`);
 });
 
