@@ -1,4 +1,10 @@
 /////////////////////////////////////////////////////////////
+// CONSTANTS, MODULES & DEPENDENCIES ------------------------
+/////////////////////////////////////////////////////////////
+const bcrypt = require('bcrypt');
+const saltRounds = 10;
+
+/////////////////////////////////////////////////////////////
 // HELPER FUNCTIONS -----------------------------------------
 /////////////////////////////////////////////////////////////
 
@@ -45,8 +51,36 @@ const urlsForUser = (id, urlDatabase) => {
   return userURLs;
 };
 
+// Validate the login of a user
+const validateLogin = (email, password, usersDatabase) => {
+  // Authenticate: error if either email or password fields are empty
+  if (email === '' || password === '') {
+    const error = { statusCode: 400, message: "Invalid email and/or password."};
+    return { error, data: null };
+  }
+
+  // Authenticate: error if email doesn't exist (meaning a user with the email isn't found)
+  const user = getUserByEmail(email, usersDatabase);
+  if (!user) {
+    const error = { statusCode: 403, message: "Your email is currently not registered with us."};
+    return { error, data: null };
+  }
+
+  // Authenticate: error if email exists, but passwords don't match
+  const hashedPassword = user.password;
+  const passwordsMatch = bcrypt.compareSync(password, hashedPassword);
+  if (!passwordsMatch) {
+    const error = { statusCode: 403, message: "Incorrect email and/or password."};
+    return { error, data: null };
+  }
+
+  // If everything is valid for login, return user
+  return { error: null, data: user };
+};
+
 module.exports = {
   generateRandomString,
   getUserByEmail,
-  urlsForUser
+  urlsForUser,
+  validateLogin
 };

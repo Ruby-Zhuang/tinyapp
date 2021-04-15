@@ -8,7 +8,7 @@ const cookieSession = require('cookie-session');
 const bcrypt = require('bcrypt');
 const saltRounds = 10;
 const methodOverride = require('method-override');
-const { generateRandomString, getUserByEmail, urlsForUser } = require('./helpers');
+const { generateRandomString, getUserByEmail, urlsForUser, validateLogin } = require('./helpers');
 
 /////////////////////////////////////////////////////////////
 // APP & MIDDLEWARE USE -------------------------------------
@@ -97,8 +97,10 @@ app.get("/urls", (req, res) => {
     res.status(401);
     const templateVars = {
       user: null,
-      statusCode: "401",
-      message: "Unauthorised access. You need to log in or register."
+      error: {
+        statusCode: "401",
+        message: "Unauthorised access. You need to log in or register."
+      }
     };
     res.render("error", templateVars);
     return;
@@ -238,47 +240,18 @@ app.post("/urls", (req, res) => {
 // CREATE/POST: Handle user login and set a cookie with the user_id
 app.post("/login", (req, res) => {
   const { email, password } = req.body;
-
-  // Authenticate: error if either email or password fields are empty
-  if (email === '' || password === '') {
-    res.status(400);
-    const templateVars = {
-      user: null,
-      statusCode: "400",
-      message: "Invalid email and/or password."
-    };
+  
+  // Validate login and display error if there is one
+  const { error, data } = validateLogin(email, password, users);
+  if (error) {
+    const templateVars = { error, user: null };
+    res.status(error.statusCode);
     res.render("error", templateVars);
     return;
   }
 
-  // Authenticate: error if email doesn't exist (meaning a user with the email isn't found)
-  const user = getUserByEmail(email, users);
-  if (!user) {
-    res.status(403);
-    const templateVars = {
-      user: null,
-      statusCode: "403",
-      message: "Your email is currently not registered with us."
-    };
-    res.render("error", templateVars);
-    return;
-  }
-
-  // Authenticate: error if email exists, but passwords don't match
-  const hashedPassword = user.password;
-  if (!bcrypt.compareSync(password, hashedPassword)) {
-    res.status(403);
-    const templateVars = {
-      user: null,
-      statusCode: "403",
-      message: "Incorrect email and/or password."
-    };
-    res.render("error", templateVars);
-    return;
-  }
-
-  // If everything is valid for login
-  req.session['user_id'] = user.id;
+  // If everything is valid for login, set cookie and redirect to urls index page for user
+  req.session['user_id'] = data.id;
   res.redirect(`/urls`);
 });
 
@@ -327,7 +300,7 @@ app.post("/register", (req, res) => {
 // CREATE/POST: Handle user logout and clear cookies
 app.post("/logout", (req, res) => {
   req.session = null;
-  res.redirect(`/urls`);
+  res.redirect(`/login`);
 });
 
 /////////////////////////////////////////////////////////////

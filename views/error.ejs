@@ -11,7 +11,7 @@
   <!-- Bootstrap CSS -->
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css"
     integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
-  <title>URL - TinyApp Example</title>
+  <title>Error</title>
 </head>
 
 <body>
@@ -20,8 +20,8 @@
   </header>
 
   <main role="main" class="container">
-    <h1 class="mt-5">Error: <%= statusCode %></h1>
-    <p class="lead"><%= message %></p>
+    <h1 class="mt-5">Error: <%= error.statusCode %></h1>
+    <p class="lead"><%= error.message %></p>
   </main>
 
   <footer class="footer">
