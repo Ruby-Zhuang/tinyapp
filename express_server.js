@@ -7,6 +7,7 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const cookieSession = require('cookie-session');
 const bcrypt = require('bcrypt');
+const methodOverride = require('method-override');
 const saltRounds = 10;
 const app = express();
 
@@ -19,6 +20,7 @@ app.use(cookieSession({
   keys: ['key1'],
   maxAge: 24 * 60 * 60 * 1000 // 24 hours
 }));
+app.use(methodOverride('_method'));
 
 /////////////////////////////////////////////////////////////
 // DATABASES -------------------------------------------------
