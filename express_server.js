@@ -125,7 +125,7 @@ app.get("/", (req, res) => {
 
 // READ: Display all the URLs and their shortened forms
 app.get("/urls", (req, res) => {
-  const user_id = req.cookies.user_id;
+  const user_id = req.session.user_id;
   const userURLs = urlsForUser(user_id);
   const templateVars = {
     user: users[user_id],
@@ -138,7 +138,7 @@ app.get("/urls", (req, res) => {
 // READ: Display basic form page that allows user to submit URLs to be shortened
 // Needs to be before /urls/:shortURL endpoint otherwise Express will think new is a route parameter
 app.get("/urls/new", (req, res) => {
-  const user_id = req.cookies.user_id;
+  const user_id = req.session.user_id;
 
   if (!user_id || user_id === "undefined") {    // last condition here has something to do with login route, may need to update
     res.redirect(`/urls`);
@@ -153,7 +153,7 @@ app.get("/urls/new", (req, res) => {
 
 // READ: Display a single URL and its shortened form along with a form to update a specific existing shortened URL in database
 app.get("/urls/:shortURL", (req, res) => {
-  const user_id = req.cookies.user_id;
+  const user_id = req.session.user_id;
   const shortURL = req.params.shortURL;
   const longURL = urlDatabase[shortURL].longURL;
   const templateVars = {
@@ -173,7 +173,7 @@ app.get("/u/:shortURL", (req, res) => {
 
 // READ: Display registration form
 app.get("/register", (req, res) => {
-  const user_id = req.cookies.user_id; // NEED TO CHECK IF USER IS LOGGED IN ALREADY
+  const user_id = req.session.user_id; // NEED TO CHECK IF USER IS LOGGED IN ALREADY
 
   if (user_id) {
     res.redirect(`/urls`);
@@ -188,7 +188,7 @@ app.get("/register", (req, res) => {
 
 // READ: Display login form
 app.get("/login", (req, res) => {
-  const user_id = req.cookies.user_id;
+  const user_id = req.session.user_id;
 
   if (user_id) {
     res.redirect(`/urls`);
@@ -219,7 +219,7 @@ app.get("/users.json", (req, res) => {
 app.post("/urls", (req, res) => {
   const shortURL = generateRandomString(6);
   const longURL = req.body.longURL;
-  const user_id = req.cookies.user_id;
+  const user_id = req.session.user_id;
   
   urlDatabase[shortURL] = { longURL, userID: user_id};
   res.redirect(`/urls/${shortURL}`);
@@ -227,7 +227,7 @@ app.post("/urls", (req, res) => {
 
 // UPDATE/PUT: Handle the update request from the home page
 app.post("/urls/:shortURL", (req, res) => {
-  const user_id = req.cookies.user_id;
+  const user_id = req.session.user_id;
   const shortURL = req.params.shortURL;
   const longURL = req.body.longURL;
 
@@ -281,7 +281,7 @@ app.post("/login", (req, res) => {
   }
 
   // If everything is valid for login
-  res.cookie('user_id', user.id);
+  req.session.user_id = user.id;
   res.redirect(`/urls`);
 });
 
@@ -323,19 +323,20 @@ app.post("/register", (req, res) => {
     email,
     password: hashedPassword
   };
-  res.cookie('user_id', newUserID);
+
+  req.session.user_id = newUserID;
   res.redirect(`/urls`);
 });
 
 // CREATE/POST: Handle user logout and clear cookies
 app.post("/logout", (req, res) => {
-  res.clearCookie('user_id');
+  req.session = null;
   res.redirect(`/urls`);
 });
 
 // DELETE/DELETE: Handle the form submission to remove a specific existing shortened URL from database
 app.post("/urls/:shortURL/delete", (req, res) => {
-  const user_id = req.cookies.user_id;
+  const user_id = req.session.user_id;
   const shortURL = req.params.shortURL;
 
   if (user_id) {
