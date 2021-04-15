@@ -1,15 +1,15 @@
-/* eslint-disable camelcase */
 /////////////////////////////////////////////////////////////
 // CONSTANTS, SETUP & DEPENDENCIES --------------------------
 /////////////////////////////////////////////////////////////
 const PORT = 8080;
 const express = require("express");
+const app = express();
 const bodyParser = require("body-parser");
 const cookieSession = require('cookie-session');
 const bcrypt = require('bcrypt');
-const methodOverride = require('method-override');
 const saltRounds = 10;
-const app = express();
+const methodOverride = require('method-override');
+const { generateRandomString, getUserByEmail, urlsForUser } = require('./helpers');
 
 app.set("view engine", "ejs");
 app.use(bodyParser.urlencoded({
@@ -17,7 +17,7 @@ app.use(bodyParser.urlencoded({
 }));
 app.use(cookieSession({
   name: 'session',
-  keys: ['key1'],
+  keys: ['key1', 'key2'],
   maxAge: 24 * 60 * 60 * 1000 // 24 hours
 }));
 app.use(methodOverride('_method'));
@@ -66,48 +66,6 @@ const urlDatabase = {
 // HELPER FUNCTIONS -----------------------------------------
 /////////////////////////////////////////////////////////////
 
-// Generates a new "unique" shortURL [0-9 a-z A-Z]
-const generateRandomString = (numCharacters) => {
-  const stringList = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-  let randomString = '';
-  for (let i = 1; i <= numCharacters; i++) {
-    let randomCharIndex = Math.floor(Math.random() * stringList.length);
-    let randomChar = stringList[randomCharIndex];
-    randomString += randomChar;
-  }
-
-  // Recursive case if randomString already exists as a shortURL or userID
-  if (urlDatabase[randomString] || users[randomString]) {
-    generateRandomString(numCharacters);
-  }
-
-  return randomString;
-};
-
-// Get user by email
-const getUserByEmail = (email) => {
-  for (const userID in users) {
-    if (users[userID].email === email) {
-      return users[userID];
-    }
-  }
-  return null;
-};
-
-// Returns the URLs where the userID is equal to the id of the currently logged-in user.
-const urlsForUser = (id) => {
-  const userURLs = {};
-
-  for (const shortURL in urlDatabase) {
-    const { userID, longURL} = urlDatabase[shortURL];
-    if (userID === id) {
-      userURLs[shortURL] = longURL;
-    }
-  }
-
-  return userURLs;
-};
-
 // Possible helper functions to improve readiblility
 // createNewUser/validateRegister (email, password) => (error, data)
 // validateLogin (email, password) => (error, data)
@@ -121,8 +79,8 @@ const urlsForUser = (id) => {
 
 // READ: Redirect to display all the URLs if user goes to root
 app.get("/", (req, res) => {
-  const user_id = req.session.user_id;
-  if (user_id) {
+  const userID = req.session['user_id'];
+  if (userID) {
     res.redirect(`/urls`);
   } else {
     res.redirect(`/login`);
@@ -131,14 +89,14 @@ app.get("/", (req, res) => {
 
 // READ: Display all the URLs and their shortened forms
 app.get("/urls", (req, res) => {
-  const user_id = req.session.user_id;
-  const userURLs = urlsForUser(user_id);
+  const userID = req.session['user_id'];
+  const userURLs = urlsForUser(userID, urlDatabase);
   const templateVars = {
-    user: users[user_id],
+    user: users[userID],
     urls: userURLs
   };
 
-  if (!user_id) {
+  if (!userID) {
     res.redirect(`/login`);
     return;
   }
@@ -149,26 +107,26 @@ app.get("/urls", (req, res) => {
 // READ: Display basic form page that allows user to submit URLs to be shortened
 // Needs to be before /urls/:shortURL endpoint otherwise Express will think new is a route parameter
 app.get("/urls/new", (req, res) => {
-  const user_id = req.session.user_id;
+  const userID = req.session['user_id'];
   
-  if (!user_id) {
+  if (!userID) {
     res.redirect(`/login`);
     return;
   }
   
   const templateVars = {
-    user: users[user_id],
+    user: users[userID],
   };
   res.render("urls_new", templateVars);
 });
 
 // READ: Display a single URL and its shortened form along with a form to update a specific existing shortened URL in database
 app.get("/urls/:shortURL", (req, res) => {
-  const user_id = req.session.user_id;
+  const userID = req.session['user_id'];
   const shortURL = req.params.shortURL;
   const longURL = urlDatabase[shortURL].longURL;
   const templateVars = {
-    user: users[user_id],
+    user: users[userID],
     shortURL,
     longURL
   };
@@ -185,9 +143,9 @@ app.get("/u/:shortURL", (req, res) => {
 
 // READ: Display registration form
 app.get("/register", (req, res) => {
-  const user_id = req.session.user_id; // NEED TO CHECK IF USER IS LOGGED IN ALREADY
+  const userID = req.session['user_id']; // NEED TO CHECK IF USER IS LOGGED IN ALREADY
 
-  if (user_id) {
+  if (userID) {
     res.redirect(`/urls`);
     return;
   }
@@ -200,9 +158,9 @@ app.get("/register", (req, res) => {
 
 // READ: Display login form
 app.get("/login", (req, res) => {
-  const user_id = req.session.user_id;
+  const userID = req.session['user_id'];
 
-  if (user_id) {
+  if (userID) {
     res.redirect(`/urls`);
     return;
   }
@@ -229,11 +187,11 @@ app.get("/users.json", (req, res) => {
 
 // CREATE/POST: Handle the form submission to add the long URL to the database with an associated random shortURL and the current user
 app.post("/urls", (req, res) => {
-  const shortURL = generateRandomString(6);
+  const shortURL = generateRandomString(6, urlDatabase, users);
   const longURL = req.body.longURL;
-  const user_id = req.session.user_id;
+  const userID = req.session['user_id'];
   
-  urlDatabase[shortURL] = { longURL, userID: user_id};
+  urlDatabase[shortURL] = { longURL, userID };
   res.redirect(`/urls/${shortURL}`);
 });
 
@@ -254,7 +212,7 @@ app.post("/login", (req, res) => {
   }
 
   // Authenticate: error if email doesn't exist (meaning a user with the email isn't found)
-  const user = getUserByEmail(email);
+  const user = getUserByEmail(email, users);
   if (!user) {
     res.status(403);
     const templateVars = {
@@ -280,13 +238,13 @@ app.post("/login", (req, res) => {
   }
 
   // If everything is valid for login
-  req.session.user_id = user.id;
+  req.session['user_id'] = user.id;
   res.redirect(`/urls`);
 });
 
 // CREATE/POST: Handle registration form data
 app.post("/register", (req, res) => {
-  const newUserID = generateRandomString(6);
+  const newUserID = generateRandomString(6, urlDatabase, users);
   const { email, password } = req.body;
   const hashedPassword = bcrypt.hashSync(password, saltRounds);
 
@@ -303,7 +261,7 @@ app.post("/register", (req, res) => {
   }
 
   // Authenticate: error if email already exist (meaning a user was found in the database for that email entered)
-  const user = getUserByEmail(email);
+  const user = getUserByEmail(email, users);
   if (user) {
     res.status(400);
     const templateVars = {
@@ -322,7 +280,7 @@ app.post("/register", (req, res) => {
     password: hashedPassword
   };
 
-  req.session.user_id = newUserID;
+  req.session['user_id'] = newUserID;
   res.redirect(`/urls`);
 });
 
@@ -338,11 +296,11 @@ app.post("/logout", (req, res) => {
 
 // UPDATE/PUT: Handle the update request from the home page
 app.put("/urls/:shortURL", (req, res) => {
-  const user_id = req.session.user_id;
+  const userID = req.session['user_id'];
   const shortURL = req.params.shortURL;
   const longURL = req.body.longURL;
 
-  if (user_id) {
+  if (userID) {
     urlDatabase[shortURL].longURL = longURL;
   }
 
@@ -355,10 +313,10 @@ app.put("/urls/:shortURL", (req, res) => {
 
 // DELETE: Handle the form submission to remove a specific existing shortened URL from database
 app.delete("/urls/:shortURL/delete", (req, res) => {
-  const user_id = req.session.user_id;
+  const userID = req.session['user_id'];
   const shortURL = req.params.shortURL;
 
-  if (user_id) {
+  if (userID) {
     delete urlDatabase[shortURL];
   }
 
@@ -366,7 +324,7 @@ app.delete("/urls/:shortURL/delete", (req, res) => {
 });
 
 /////////////////////////////////////////////////////////////
-// SERVER FUNCTION ------------------------------------------
+// SERVER LISTEN --------------------------------------------
 /////////////////////////////////////////////////////////////
 
 app.listen(PORT, () => {
