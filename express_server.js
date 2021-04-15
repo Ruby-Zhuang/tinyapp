@@ -53,7 +53,7 @@ const urlDatabase = {
     userID: "aJ48lW"
   },
   b2xVn2: {
-    longURL: "http://www.lighthouselabs.ca",
+    longURL: "http://www.netflix.com",
     userID: "userRandomID"
   },
   sgq3y6: {
@@ -68,7 +68,6 @@ const urlDatabase = {
 
 // Generates a new "unique" shortURL [0-9 a-z A-Z]
 const generateRandomString = (numCharacters) => {
-  //const randomString = Math.random().toString(36).substring(2, numCharacters + 2);
   const stringList = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
   let randomString = '';
   for (let i = 1; i <= numCharacters; i++) {
@@ -77,10 +76,10 @@ const generateRandomString = (numCharacters) => {
     randomString += randomChar;
   }
 
-  // // Recursive case if randomString already exists as a shortURL in the database
-  // if (urlDatabase[randomString]) {
-  //   generateRandomString(numCharacters);
-  // }
+  // Recursive case if randomString already exists as a shortURL or userID
+  if (urlDatabase[randomString] || users[randomString]) {
+    generateRandomString(numCharacters);
+  }
 
   return randomString;
 };
@@ -145,19 +144,18 @@ app.get("/urls", (req, res) => {
   }
 
   res.render("urls_index", templateVars);
-  //console.log(templateVars);
 });
 
 // READ: Display basic form page that allows user to submit URLs to be shortened
 // Needs to be before /urls/:shortURL endpoint otherwise Express will think new is a route parameter
 app.get("/urls/new", (req, res) => {
   const user_id = req.session.user_id;
-
+  
   if (!user_id) {
     res.redirect(`/login`);
     return;
   }
-
+  
   const templateVars = {
     user: users[user_id],
   };
@@ -174,6 +172,7 @@ app.get("/urls/:shortURL", (req, res) => {
     shortURL,
     longURL
   };
+
   res.render("urls_show", templateVars);
 });
 
@@ -293,7 +292,6 @@ app.post("/register", (req, res) => {
 
   // Authenticate: error if either email or password fields are empty
   if (email === '' || password === '') {
-    //res.status(400).send("Error message here");
     res.status(400);
     const templateVars = {
       user: null,
