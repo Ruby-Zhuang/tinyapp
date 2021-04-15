@@ -105,12 +105,6 @@ app.get("/urls", (req, res) => {
     res.render("error", templateVars);
     return;
   }
-  
-  // Is it the above or below?!
-  if (!userID) {
-    res.redirect(`/login`);
-    return;
-  }
 
   const userURLs = urlsForUser(userID, urlDatabase);
   const templateVars = {
@@ -146,24 +140,42 @@ app.get("/urls/:shortURL", (req, res) => {
     res.status(401);
     const templateVars = {
       user: null,
-      statusCode: "401",
-      message: "Unauthorised access. You need to log in or register."
+      error: {
+        statusCode: "401",
+        message: "Unauthorised access. You need to log in or register."
+      }
     };
     res.render("error", templateVars);
     return;
   }
 
-  const userURLs = urlsForUser(userID, urlDatabase);
+  // Check if resource exists
   const shortURL = req.params.shortURL;
-  const longURL = urlDatabase[shortURL].longURL;
+  if (!urlDatabase[shortURL]) {
+    res.status(404);
+    const templateVars = {
+      user: users[userID],
+      error: {
+        statusCode: "404",
+        message: "ShortURL not found."
+      }
+    };
+    res.render("error", templateVars);
+    return;
+  }
+
 
   // If user is logged in, check if shortURL belongs to current user
+  const longURL = urlDatabase[shortURL].longURL;
+  const userURLs = urlsForUser(userID, urlDatabase);
   if (!userURLs[shortURL]) {
     res.status(403);
     const templateVars = {
-      user: null,
-      statusCode: "403",
-      message: "Unauthorised access."
+      user: users[userID],
+      error: {
+        statusCode: "403",
+        message: "Unauthorised access."
+      }
     };
     res.render("error", templateVars);
     return;
@@ -180,14 +192,30 @@ app.get("/urls/:shortURL", (req, res) => {
 
 // READ: Redirect any request to "/u/:shortURL" to its longURL
 app.get("/u/:shortURL", (req, res) => {
+  const userID = req.session['user_id'];
   const shortURL = req.params.shortURL;
+  
+  // Check if resource exists
+  if (!urlDatabase[shortURL]) {
+    res.status(404);
+    const templateVars = {
+      user: users[userID],
+      error: {
+        statusCode: "404",
+        message: "ShortURL not found."
+      }
+    };
+    res.render("error", templateVars);
+    return;
+  }
+
   const longURL = urlDatabase[shortURL].longURL;
   res.redirect(longURL);
 });
 
 // READ: Display registration form
 app.get("/register", (req, res) => {
-  const userID = req.session['user_id']; // NEED TO CHECK IF USER IS LOGGED IN ALREADY
+  const userID = req.session['user_id'];
 
   // Redirect user to urls index if they're already logged in;
   if (userID) {
@@ -229,9 +257,24 @@ app.get("/users.json", (req, res) => {
 
 // CREATE/POST: Handle the form submission to add the long URL to the database with an associated random shortURL and the current user
 app.post("/urls", (req, res) => {
+  const userID = req.session['user_id'];
+
+  // If user is not logged in
+  if (!userID) {
+    res.status(401);
+    const templateVars = {
+      user: null,
+      error: {
+        statusCode: "401",
+        message: "Unauthorised access. You need to log in or register."
+      }
+    };
+    res.render("error", templateVars);
+    return;
+  }
+
   const shortURL = generateRandomString(6, urlDatabase, users);
   const longURL = req.body.longURL;
-  const userID = req.session['user_id'];
   
   urlDatabase[shortURL] = { longURL, userID };
   res.redirect(`/urls/${shortURL}`);
@@ -276,7 +319,7 @@ app.post("/register", (req, res) => {
 // CREATE/POST: Handle user logout and clear cookies
 app.post("/logout", (req, res) => {
   req.session = null;
-  res.redirect(`/login`);
+  res.redirect(`/urls`);
 });
 
 /////////////////////////////////////////////////////////////
@@ -289,10 +332,36 @@ app.put("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
   const longURL = req.body.longURL;
 
-  if (userID) {
-    urlDatabase[shortURL].longURL = longURL;
+  // If user is not logged in
+  if (!userID) {
+    res.status(401);
+    const templateVars = {
+      user: null,
+      error: {
+        statusCode: "401",
+        message: "Unauthorised access. You need to log in or register."
+      }
+    };
+    res.render("error", templateVars);
+    return;
   }
 
+  // If user is logged in, check if shortURL belongs to current user
+  const userURLs = urlsForUser(userID, urlDatabase);
+  if (!userURLs[shortURL]) {
+    res.status(403);
+    const templateVars = {
+      user: users[userID],
+      error: {
+        statusCode: "403",
+        message: "Unauthorised access."
+      }
+    };
+    res.render("error", templateVars);
+    return;
+  }
+
+  urlDatabase[shortURL].longURL = longURL;
   res.redirect(`/urls`);
 });
 
@@ -305,10 +374,37 @@ app.delete("/urls/:shortURL/delete", (req, res) => {
   const userID = req.session['user_id'];
   const shortURL = req.params.shortURL;
 
-  if (userID) {
-    delete urlDatabase[shortURL];
+  // If user is not logged in
+  if (!userID) {
+    res.status(401);
+    const templateVars = {
+      user: null,
+      error: {
+        statusCode: "401",
+        message: "Unauthorised access. You need to log in or register."
+      }
+    };
+    res.render("error", templateVars);
+    return;
   }
 
+  // If user is logged in, check if shortURL belongs to current user
+  const userURLs = urlsForUser(userID, urlDatabase);
+  if (!userURLs[shortURL]) {
+    res.status(403);
+    const templateVars = {
+      user: users[userID],
+      error: {
+        statusCode: "403",
+        message: "Unauthorised access."
+      }
+    };
+
+    res.render("error", templateVars);
+    return;
+  }
+
+  delete urlDatabase[shortURL];
   res.redirect(`/urls`);
 });
 
