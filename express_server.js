@@ -8,7 +8,7 @@ const cookieSession = require('cookie-session');
 const bcrypt = require('bcrypt');
 const saltRounds = 10;
 const methodOverride = require('method-override');
-const { generateRandomString, urlsForUser, validateLogin, validateRegister} = require('./helpers');
+const { generateRandomString, urlsForUser, validateLogin, validateRegister, validateResource} = require('./helpers');
 
 /////////////////////////////////////////////////////////////
 // APP & MIDDLEWARE USE -------------------------------------
@@ -62,17 +62,6 @@ const urlDatabase = {
     userID: "userRandomID"
   }
 };
-
-/////////////////////////////////////////////////////////////
-// HELPER FUNCTIONS -----------------------------------------
-/////////////////////////////////////////////////////////////
-
-// Possible helper functions to improve readiblility:
-// createNewUser/validateRegister (email, password) => (error, data)
-// validateLogin (email, password) => (error, data)
-// Refactor checkEmail exists
-// If have time, test for http and https prefixes
-
 
 /////////////////////////////////////////////////////////////
 // GET REQUESTS ---------------------------------------------
@@ -134,6 +123,16 @@ app.get("/urls/new", (req, res) => {
 // READ: Display a single URL and its shortened form along with a form to update a specific existing shortened URL in database
 app.get("/urls/:shortURL", (req, res) => {
   const userID = req.session['user_id'];
+  const shortURL = req.params.shortURL;
+
+  // Check if resource exists
+  const resourceError = validateResource(shortURL, urlDatabase);
+  if (resourceError) {
+    const templateVars = { error: resourceError, user: users[userID] };
+    res.status(resourceError.statusCode);
+    res.render("error", templateVars);
+    return;
+  }
 
   // If user is not logged in
   if (!userID) {
@@ -148,22 +147,6 @@ app.get("/urls/:shortURL", (req, res) => {
     res.render("error", templateVars);
     return;
   }
-
-  // Check if resource exists
-  const shortURL = req.params.shortURL;
-  if (!urlDatabase[shortURL]) {
-    res.status(404);
-    const templateVars = {
-      user: users[userID],
-      error: {
-        statusCode: "404",
-        message: "ShortURL not found."
-      }
-    };
-    res.render("error", templateVars);
-    return;
-  }
-
 
   // If user is logged in, check if shortURL belongs to current user
   const longURL = urlDatabase[shortURL].longURL;
@@ -194,20 +177,29 @@ app.get("/urls/:shortURL", (req, res) => {
 app.get("/u/:shortURL", (req, res) => {
   const userID = req.session['user_id'];
   const shortURL = req.params.shortURL;
-  
+
   // Check if resource exists
-  if (!urlDatabase[shortURL]) {
-    res.status(404);
-    const templateVars = {
-      user: users[userID],
-      error: {
-        statusCode: "404",
-        message: "ShortURL not found."
-      }
-    };
+  const resourceError = validateResource(shortURL, urlDatabase);
+  if (resourceError) {
+    const templateVars = { error: resourceError, user: users[userID] };
+    res.status(resourceError.statusCode);
     res.render("error", templateVars);
     return;
   }
+
+  // // Check if resource exists
+  // if (!urlDatabase[shortURL]) {
+  //   res.status(404);
+  //   const templateVars = {
+  //     user: users[userID],
+  //     error: {
+  //       statusCode: "404",
+  //       message: "ShortURL not found."
+  //     }
+  //   };
+  //   res.render("error", templateVars);
+  //   return;
+  // }
 
   const longURL = urlDatabase[shortURL].longURL;
   res.redirect(longURL);

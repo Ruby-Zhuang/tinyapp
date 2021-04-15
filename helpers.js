@@ -113,9 +113,18 @@ const validateRegister = (email, password, usersDatabase, urlDatabase) => {
   return { error: null, data: newUser };
 };
 
+const validateResource = (shortURL, urlDatabase) => {
+  if (!urlDatabase[shortURL]) {
+    const error = { statusCode: 404, message: "ShortURL not found." };
+    return error;
+  }
+  return null;
+};
+
 module.exports = {
   generateRandomString,
   urlsForUser,
   validateLogin,
-  validateRegister
+  validateRegister,
+  validateResource
 };
