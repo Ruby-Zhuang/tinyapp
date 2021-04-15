@@ -238,19 +238,6 @@ app.post("/urls", (req, res) => {
   res.redirect(`/urls/${shortURL}`);
 });
 
-// UPDATE/PUT: Handle the update request from the home page
-app.post("/urls/:shortURL", (req, res) => {
-  const user_id = req.session.user_id;
-  const shortURL = req.params.shortURL;
-  const longURL = req.body.longURL;
-
-  if (user_id) {
-    urlDatabase[shortURL].longURL = longURL;
-  }
-
-  res.redirect(`/urls`);
-});
-
 // CREATE/POST: Handle user login and set a cookie with the user_id
 app.post("/login", (req, res) => {
   const { email, password } = req.body;
@@ -347,8 +334,29 @@ app.post("/logout", (req, res) => {
   res.redirect(`/urls`);
 });
 
-// DELETE/DELETE: Handle the form submission to remove a specific existing shortened URL from database
-app.post("/urls/:shortURL/delete", (req, res) => {
+/////////////////////////////////////////////////////////////
+// PUT REQUESTS --------------------------------------------
+/////////////////////////////////////////////////////////////
+
+// UPDATE/PUT: Handle the update request from the home page
+app.put("/urls/:shortURL", (req, res) => {
+  const user_id = req.session.user_id;
+  const shortURL = req.params.shortURL;
+  const longURL = req.body.longURL;
+
+  if (user_id) {
+    urlDatabase[shortURL].longURL = longURL;
+  }
+
+  res.redirect(`/urls`);
+});
+
+/////////////////////////////////////////////////////////////
+// DELETE REQUESTS --------------------------------------------
+/////////////////////////////////////////////////////////////
+
+// DELETE: Handle the form submission to remove a specific existing shortened URL from database
+app.delete("/urls/:shortURL/delete", (req, res) => {
   const user_id = req.session.user_id;
   const shortURL = req.params.shortURL;
 

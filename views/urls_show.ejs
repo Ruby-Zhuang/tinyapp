@@ -29,7 +29,7 @@
 
     <div class="card-footer text-muted">
       <h2>Edit</h2>
-      <form class="form-inline justify-content-center" action="/urls/<%= shortURL %>" method="POST" style="text-align:center">
+      <form class="form-inline justify-content-center" action="/urls/<%= shortURL %>?_method=PUT" method="POST" style="text-align:center">
         <div class="form-group mb-2">
           <label for="longURL">New URL:</label>
           <input class="form-control" type="text" name="longURL" placeholder="http://"
