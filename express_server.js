@@ -120,7 +120,12 @@ const urlsForUser = (id) => {
 
 // READ: Redirect to display all the URLs if user goes to root
 app.get("/", (req, res) => {
-  res.redirect(`/urls`);
+  const user_id = req.session.user_id;
+  if (user_id) {
+    res.redirect(`/urls`);
+  } else {
+    res.redirect(`/login`);
+  }
 });
 
 // READ: Display all the URLs and their shortened forms
@@ -131,8 +136,14 @@ app.get("/urls", (req, res) => {
     user: users[user_id],
     urls: userURLs
   };
-  //console.log(templateVars);
+
+  if (!user_id) {
+    res.redirect(`/login`);
+    return;
+  }
+
   res.render("urls_index", templateVars);
+  //console.log(templateVars);
 });
 
 // READ: Display basic form page that allows user to submit URLs to be shortened
@@ -140,8 +151,8 @@ app.get("/urls", (req, res) => {
 app.get("/urls/new", (req, res) => {
   const user_id = req.session.user_id;
 
-  if (!user_id || user_id === "undefined") {    // last condition here has something to do with login route, may need to update
-    res.redirect(`/urls`);
+  if (!user_id) {
+    res.redirect(`/login`);
     return;
   }
 
