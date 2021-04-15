@@ -5,7 +5,7 @@
 const PORT = 8080;
 const express = require("express");
 const bodyParser = require("body-parser");
-const cookieParser = require('cookie-parser');
+const cookieSession = require('cookie-session');
 const bcrypt = require('bcrypt');
 const saltRounds = 10;
 const app = express();
@@ -14,7 +14,11 @@ app.set("view engine", "ejs");
 app.use(bodyParser.urlencoded({
   extended: true
 }));
-app.use(cookieParser());
+app.use(cookieSession({
+  name: 'session',
+  keys: ['key1'],
+  maxAge: 24 * 60 * 60 * 1000 // 24 hours
+}));
 
 /////////////////////////////////////////////////////////////
 // DATABASES -------------------------------------------------
