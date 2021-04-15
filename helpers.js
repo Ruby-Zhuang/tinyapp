@@ -21,10 +21,10 @@ const generateRandomString = (numCharacters, urlDatabase, usersDatabase) => {
 };
 
 // Get user by email
-const getUserByEmail = (email, database) => {
-  for (const userID in database) {
-    if (database[userID].email === email) {
-      return database[userID];
+const getUserByEmail = (email, userDatabase) => {
+  for (const userID in userDatabase) {
+    if (userDatabase[userID].email === email) {
+      return userDatabase[userID];
     }
   }
 
@@ -32,11 +32,11 @@ const getUserByEmail = (email, database) => {
 };
 
 // Returns the URLs where the userID is equal to the id of the currently logged-in user.
-const urlsForUser = (id, database) => {
+const urlsForUser = (id, urlDatabase) => {
   const userURLs = {};
 
-  for (const shortURL in database) {
-    const { userID, longURL} = database[shortURL];
+  for (const shortURL in urlDatabase) {
+    const { userID, longURL} = urlDatabase[shortURL];
     if (userID === id) {
       userURLs[shortURL] = longURL;
     }

@@ -1,9 +1,8 @@
 /////////////////////////////////////////////////////////////
-// CONSTANTS, SETUP & DEPENDENCIES --------------------------
+// CONSTANTS, MODULES & DEPENDENCIES ------------------------
 /////////////////////////////////////////////////////////////
 const PORT = 8080;
 const express = require("express");
-const app = express();
 const bodyParser = require("body-parser");
 const cookieSession = require('cookie-session');
 const bcrypt = require('bcrypt');
@@ -11,19 +10,21 @@ const saltRounds = 10;
 const methodOverride = require('method-override');
 const { generateRandomString, getUserByEmail, urlsForUser } = require('./helpers');
 
-app.set("view engine", "ejs");
-app.use(bodyParser.urlencoded({
-  extended: true
-}));
+/////////////////////////////////////////////////////////////
+// APP & MIDDLEWARE USE -------------------------------------
+/////////////////////////////////////////////////////////////
+const app = express();
 app.use(cookieSession({
   name: 'session',
   keys: ['key1', 'key2'],
   maxAge: 24 * 60 * 60 * 1000 // 24 hours
 }));
+app.use(bodyParser.urlencoded({ extended: true }));
 app.use(methodOverride('_method'));
+app.set("view engine", "ejs");
 
 /////////////////////////////////////////////////////////////
-// DATABASES -------------------------------------------------
+// DATABASES ------------------------------------------------
 /////////////////////////////////////////////////////////////
 const users = {
   "userRandomID": {
@@ -66,7 +67,7 @@ const urlDatabase = {
 // HELPER FUNCTIONS -----------------------------------------
 /////////////////////////////////////////////////////////////
 
-// Possible helper functions to improve readiblility
+// Possible helper functions to improve readiblility:
 // createNewUser/validateRegister (email, password) => (error, data)
 // validateLogin (email, password) => (error, data)
 // Refactor checkEmail exists
@@ -90,16 +91,30 @@ app.get("/", (req, res) => {
 // READ: Display all the URLs and their shortened forms
 app.get("/urls", (req, res) => {
   const userID = req.session['user_id'];
+
+  // If user is not logged in
+  if (!userID) {
+    res.status(401);
+    const templateVars = {
+      user: null,
+      statusCode: "401",
+      message: "Unauthorised access. You need to log in or register."
+    };
+    res.render("error", templateVars);
+    return;
+  }
+  
+  // Is it the above or below?!
+  if (!userID) {
+    res.redirect(`/login`);
+    return;
+  }
+
   const userURLs = urlsForUser(userID, urlDatabase);
   const templateVars = {
     user: users[userID],
     urls: userURLs
   };
-
-  if (!userID) {
-    res.redirect(`/login`);
-    return;
-  }
 
   res.render("urls_index", templateVars);
 });
@@ -123,8 +138,35 @@ app.get("/urls/new", (req, res) => {
 // READ: Display a single URL and its shortened form along with a form to update a specific existing shortened URL in database
 app.get("/urls/:shortURL", (req, res) => {
   const userID = req.session['user_id'];
+
+  // If user is not logged in
+  if (!userID) {
+    res.status(401);
+    const templateVars = {
+      user: null,
+      statusCode: "401",
+      message: "Unauthorised access. You need to log in or register."
+    };
+    res.render("error", templateVars);
+    return;
+  }
+
+  const userURLs = urlsForUser(userID, urlDatabase);
   const shortURL = req.params.shortURL;
   const longURL = urlDatabase[shortURL].longURL;
+
+  // If user is logged in, check if shortURL belongs to current user
+  if (!userURLs[shortURL]) {
+    res.status(403);
+    const templateVars = {
+      user: null,
+      statusCode: "403",
+      message: "Unauthorised access."
+    };
+    res.render("error", templateVars);
+    return;
+  }
+  
   const templateVars = {
     user: users[userID],
     shortURL,
@@ -145,14 +187,13 @@ app.get("/u/:shortURL", (req, res) => {
 app.get("/register", (req, res) => {
   const userID = req.session['user_id']; // NEED TO CHECK IF USER IS LOGGED IN ALREADY
 
+  // Redirect user to urls index if they're already logged in;
   if (userID) {
     res.redirect(`/urls`);
     return;
   }
 
-  const templateVars = {
-    user: null
-  };
+  const templateVars = { user: null };
   res.render("register", templateVars);
 });
 
@@ -160,14 +201,13 @@ app.get("/register", (req, res) => {
 app.get("/login", (req, res) => {
   const userID = req.session['user_id'];
 
+  // Redirect user to urls index if they're already logged in;
   if (userID) {
     res.redirect(`/urls`);
     return;
   }
 
-  const templateVars = {
-    user: null
-  };
+  const templateVars = { user: null };
   res.render("login", templateVars);
 });
 

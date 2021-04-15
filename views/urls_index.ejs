@@ -33,7 +33,7 @@
       <tbody>
         <% for (let shortURL in urls) { %>
         <tr>
-          <td><%= shortURL %></td>
+          <td><a href="/u/<%= shortURL %>"><%= shortURL %></a></td>
           <td><%= urls[shortURL] %></td>
           <td>
             <form method="GET" action="/urls/<%= shortURL %>"><button type="submit"
