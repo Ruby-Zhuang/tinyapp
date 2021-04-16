@@ -182,16 +182,6 @@ app.get("/login", (req, res) => {
   res.render("login", templateVars);
 });
 
-// READ: FOR DEVELOPMENT PURPOSES - JSON STRING REPRESENTING THE ENTIRE URLDATABASE OBJECT
-app.get("/urls.json", (req, res) => {
-  res.json(urlDatabase);
-});
-
-// READ: FOR DEVELOPMENT PURPOSES - JSON STRING REPRESENTING THE ENTIRE USERS OBJECT
-app.get("/users.json", (req, res) => {
-  res.json(users);
-});
-
 /////////////////////////////////////////////////////////////
 // POST REQUESTS --------------------------------------------
 /////////////////////////////////////////////////////////////
