@@ -49,7 +49,7 @@ const getUserByEmail = (email, userDatabase) => {
     }
   }
 
-  return null;
+  return;
 };
 
 // Returns the URLs where the userID is equal to the id of the currently logged-in user.
@@ -80,7 +80,7 @@ const validateAccess = (performChecks, userID, shortURL, urlDatabase) => {
   // If specified, check if user is logged in
   if (performChecks.loggedIn) {
     if (!userID) {
-      const error = { statusCode: 401, message: "Unauthorised access. You need to log in or register." };
+      const error = { statusCode: 401, message: "Unauthorized access. You need to log in or register." };
       return error;
     }
   }
@@ -89,7 +89,7 @@ const validateAccess = (performChecks, userID, shortURL, urlDatabase) => {
   if (performChecks.urlOwner) {
     const userURLs = urlsForUser(userID, urlDatabase);
     if (!userURLs[shortURL]) {
-      const error = { statusCode: 403, message: "Unauthorised access." };
+      const error = { statusCode: 403, message: "Unauthorized access." };
       return error;
     }
   }
@@ -146,6 +146,7 @@ const validateRegister = (email, password, usersDatabase, urlDatabase) => {
 
 module.exports = {
   generateRandomString,
+  getUserByEmail,
   urlsForUser,
   validateAccess,
   validateLogin,
