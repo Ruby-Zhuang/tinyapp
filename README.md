@@ -4,7 +4,7 @@ TinyApp is a full stack web application built with Node and Express that allows 
 
 ## Final Product
 
-!["Screenshot of URLs page"](https://github.com/Ruby-Zhuang/tinyapp/blob/master/docs/urls-page.png?raw=true)
+!["Screenshot of URLs page"]()
 !["Screenshot of register page"](https://github.com/Ruby-Zhuang/tinyapp/blob/master/docs/register-page.png?raw=true)
 !["Screenshot of a specific shortened URL"](https://github.com/Ruby-Zhuang/tinyapp/blob/master/docs/shorturl-page.png?raw=true)
 
