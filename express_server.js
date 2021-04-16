@@ -97,11 +97,12 @@ app.get("/urls", (req, res) => {
   res.render("urls_index", templateVars);
 });
 
-// READ: DISPLAY BASIC FORM PAGE THAT ALLOWS USER TO SUBMIT URLS TO BE SHORTENED
+// READ: DISPLAY FORM PAGE THAT ALLOWS USER TO SUBMIT URLS TO BE SHORTENED
 // Needs to be before /urls/:shortURL endpoint otherwise Express will think new is a route parameter
 app.get("/urls/new", (req, res) => {
   const userID = req.session['user_id'];
   
+  // Redirect to login page if user is not logged in
   if (!userID) {
     res.redirect(`/login`);
     return;
@@ -116,7 +117,7 @@ app.get("/urls/:shortURL", (req, res) => {
   const userID = req.session['user_id'];
   const shortURL = req.params.shortURL;
 
-  // Validate access for whether url is valid, if a user is logged in and if user owns the url
+  // Validate access for whether shortURL is valid, if a user is logged in and if user owns the shortURL
   const performChecks = { validURL: true, loggedIn: true, urlOwner: true };
   const error = validateAccess(performChecks, userID, shortURL, urlDatabase);
   if (error) {
@@ -126,7 +127,7 @@ app.get("/urls/:shortURL", (req, res) => {
     return;
   }
   
-  // Render page if user has access and there are no errors
+  // Render specific URL page if user has access
   const longURL = urlDatabase[shortURL].longURL;
   const user = users[userID];
   const templateVars = { user, shortURL, longURL };
@@ -138,7 +139,7 @@ app.get("/u/:shortURL", (req, res) => {
   const userID = req.session['user_id'];
   const shortURL = req.params.shortURL;
 
-  // Validate access for whether url is valid
+  // Validate access for whether shortURL is valid
   const performChecks = { validURL: true };
   const error = validateAccess(performChecks, userID, shortURL, urlDatabase);
   if (error) {
@@ -157,7 +158,7 @@ app.get("/u/:shortURL", (req, res) => {
 app.get("/register", (req, res) => {
   const userID = req.session['user_id'];
 
-  // Redirect user to urls index if they're already logged in;
+  // Redirect user to urls index if they're already logged in
   if (userID) {
     res.redirect(`/urls`);
     return;
@@ -171,7 +172,7 @@ app.get("/register", (req, res) => {
 app.get("/login", (req, res) => {
   const userID = req.session['user_id'];
 
-  // Redirect user to urls index if they're already logged in;
+  // Redirect user to urls index if they're already logged in
   if (userID) {
     res.redirect(`/urls`);
     return;
@@ -195,7 +196,7 @@ app.get("/users.json", (req, res) => {
 // POST REQUESTS --------------------------------------------
 /////////////////////////////////////////////////////////////
 
-// CREATE/POST: HANDLE THE FORM SUBMISSION TO ADD THE LONG URL TO THE DATABASE WITH AN ASSOCIATED RANDOM SHORTURL AND THE CURRENT USER
+// CREATE/POST: HANDLE THE FORM SUBMISSION TO ADD LONGURL TO THE DATABASE WITH AN ASSOCIATED RANDOM SHORTURL AND THE CURRENT USER
 app.post("/urls", (req, res) => {
   const userID = req.session['user_id'];
 
@@ -209,7 +210,7 @@ app.post("/urls", (req, res) => {
     return;
   }
 
-  // Add new url to url list if user is logged in
+  // Add new URL to database if user is logged in
   const shortURL = generateRandomString(6, urlDatabase, users);
   const longURL = req.body.longURL;
   urlDatabase[shortURL] = { longURL, userID };
@@ -268,7 +269,7 @@ app.put("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
   const longURL = req.body.longURL;
 
-  // Validate access for whether a user is logged in and if user owns the url
+  // Validate access for whether a user is logged in and if user owns the shortURL
   const performChecks = { loggedIn: true, urlOwner: true };
   const error = validateAccess(performChecks, userID, shortURL, urlDatabase);
   if (error) {
@@ -278,7 +279,7 @@ app.put("/urls/:shortURL", (req, res) => {
     return;
   }
 
-  // Update longURL for shortURL if url belongs to user
+  // Update longURL if shortURL belongs to user
   urlDatabase[shortURL].longURL = longURL;
   res.redirect(`/urls`);
 });
@@ -292,7 +293,7 @@ app.delete("/urls/:shortURL/delete", (req, res) => {
   const userID = req.session['user_id'];
   const shortURL = req.params.shortURL;
 
-  // Validate access for whether a user is logged in and if user owns the url
+  // Validate access for whether a user is logged in and if user owns the shortURL
   const performChecks = { loggedIn: true, urlOwner: true };
   const error = validateAccess(performChecks, userID, shortURL, urlDatabase);
   if (error) {
@@ -308,7 +309,7 @@ app.delete("/urls/:shortURL/delete", (req, res) => {
 });
 
 /////////////////////////////////////////////////////////////
-// SERVER LISTEN --------------------------------------------
+// SERVER FUNCTION ------------------------------------------
 /////////////////////////////////////////////////////////////
 
 app.listen(PORT, () => {

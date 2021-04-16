@@ -8,7 +8,7 @@ const saltRounds = 10;
 // HELPER FUNCTIONS -----------------------------------------
 /////////////////////////////////////////////////////////////
 
-// Create a new user
+// CREATE A NEW USER
 const createNewUser = (email, password, usersDatabase, urlDatabase) => {
   const newUserID = generateRandomString(6, urlDatabase, usersDatabase);
   const hashedPassword = bcrypt.hashSync(password, saltRounds);
@@ -23,7 +23,7 @@ const createNewUser = (email, password, usersDatabase, urlDatabase) => {
   return newUser;
 };
 
-// Generates a new "unique" shortURL [a-z A-Z 0-9]
+// GENERATES A NEW "UNIQUE" ID [a-z A-Z 0-9]
 const generateRandomString = (numCharacters, urlDatabase, usersDatabase) => {
   const validCharacters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
   let randomString = '';
@@ -41,7 +41,7 @@ const generateRandomString = (numCharacters, urlDatabase, usersDatabase) => {
   return randomString;
 };
 
-// Get user by email
+// GET USER OJBECT BY EMAIL
 const getUserByEmail = (email, userDatabase) => {
   for (const userID in userDatabase) {
     if (userDatabase[userID].email === email) {
@@ -52,7 +52,7 @@ const getUserByEmail = (email, userDatabase) => {
   return;
 };
 
-// Returns the URLs where the userID is equal to the id of the currently logged-in user.
+// GET URLS WHERE THE USERID IS EQUAL TO THE ID OF THE CURRENTLY LOGGED-IN USER
 const urlsForUser = (id, urlDatabase) => {
   const userURLs = {};
 
@@ -66,10 +66,10 @@ const urlsForUser = (id, urlDatabase) => {
   return userURLs;
 };
 
-// Validate access of user based on conditions set in checks object and returns error object or data
+// VALIDATE ACCESS OF USER BASED ON CONDITIONS SET IN PERFORMCHECKS OBJECT AND RETURNS ERROR IF ANY
 const validateAccess = (performChecks, userID, shortURL, urlDatabase) => {
 
-  // If specified, check if url is valid
+  // If specified, check if shortURL is valid
   if (performChecks.validURL) {
     if (!urlDatabase[shortURL]) {
       const error = { statusCode: 404, message: "ShortURL not found." };
@@ -97,9 +97,9 @@ const validateAccess = (performChecks, userID, shortURL, urlDatabase) => {
   return null;
 };
 
-// Validate the login of a user
+// VALIDATE THE LOGIN OF A USER
 const validateLogin = (email, password, usersDatabase) => {
-  // Error if either email or password fields are empty
+  // Error if either email and/or password fields are empty
   if (email === '' || password === '') {
     const error = { statusCode: 400, message: "Invalid email and/or password." };
     return { error, data: null };
@@ -120,11 +120,11 @@ const validateLogin = (email, password, usersDatabase) => {
     return { error, data: null };
   }
 
-  // If everything is valid for login, return user
+  // If everything is valid for login, return user data
   return { error: null, data: user };
 };
 
-// Validate the login of a user
+// VALIDATE THE LOGIN OF A USER
 const validateRegister = (email, password, usersDatabase, urlDatabase) => {
   // Error if either email or password fields are empty
   if (email === '' || password === '') {
