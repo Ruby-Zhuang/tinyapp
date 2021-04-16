@@ -35,7 +35,7 @@ const generateRandomString = (numCharacters, urlDatabase, usersDatabase) => {
 
   // Recursive case if randomString already exists as a shortURL or userID
   if (urlDatabase[randomString] || usersDatabase[randomString]) {
-    generateRandomString(numCharacters);
+    return generateRandomString(numCharacters);
   }
 
   return randomString;
