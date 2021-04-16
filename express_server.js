@@ -186,7 +186,7 @@ app.get("/login", (req, res) => {
 // POST REQUESTS --------------------------------------------
 /////////////////////////////////////////////////////////////
 
-// CREATE/POST: HANDLE THE FORM SUBMISSION TO ADD LONGURL TO THE DATABASE WITH AN ASSOCIATED RANDOM SHORTURL AND THE CURRENT USER
+// CREATE: HANDLE THE FORM SUBMISSION TO ADD LONGURL TO THE DATABASE WITH AN ASSOCIATED RANDOM SHORTURL AND THE CURRENT USER
 app.post("/urls", (req, res) => {
   const userID = req.session['user_id'];
 
@@ -207,7 +207,7 @@ app.post("/urls", (req, res) => {
   res.redirect(`/urls/${shortURL}`);
 });
 
-// CREATE/POST: HANDLE USER LOGIN AND SET A COOKIE WITH THE USER_ID
+// CREATE: HANDLE USER LOGIN AND SET A COOKIE WITH THE USER_ID
 app.post("/login", (req, res) => {
   const { email, password } = req.body;
   
@@ -225,7 +225,7 @@ app.post("/login", (req, res) => {
   res.redirect(`/urls`);
 });
 
-// CREATE/POST: HANDLE REGISTRATION FORM DATA
+// CREATE: HANDLE REGISTRATION FORM DATA
 app.post("/register", (req, res) => {
   const { email, password } = req.body;
   
@@ -253,7 +253,7 @@ app.post("/logout", (req, res) => {
 // PUT REQUESTS --------------------------------------------
 /////////////////////////////////////////////////////////////
 
-// UPDATE/PUT: HANDLE THE UPDATE REQUEST FROM THE SHORTURL PAGE
+// UPDATE: HANDLE THE UPDATE REQUEST FROM THE SHORTURL PAGE
 app.put("/urls/:shortURL", (req, res) => {
   const userID = req.session['user_id'];
   const shortURL = req.params.shortURL;
