@@ -8,7 +8,7 @@ const cookieSession = require('cookie-session');
 const bcrypt = require('bcrypt');
 const saltRounds = 10;
 const methodOverride = require('method-override');
-const { generateRandomString, urlsForUser, validateLogin, validateRegister, validateResource} = require('./helpers');
+const { generateRandomString, urlsForUser, validateAccess, validateLogin, validateRegister } = require('./helpers');
 
 /////////////////////////////////////////////////////////////
 // APP & MIDDLEWARE USE -------------------------------------
@@ -67,7 +67,7 @@ const urlDatabase = {
 // GET REQUESTS ---------------------------------------------
 /////////////////////////////////////////////////////////////
 
-// READ: Redirect to display all the URLs if user goes to root
+// READ: REDIRECT TO DISPLAY ALL THE URLS IF USER GOES TO ROOT
 app.get("/", (req, res) => {
   const userID = req.session['user_id'];
   if (userID) {
@@ -77,34 +77,27 @@ app.get("/", (req, res) => {
   }
 });
 
-// READ: Display all the URLs and their shortened forms
+// READ: DISPLAY ALL THE URLS AND THEIR SHORTENED FORMS
 app.get("/urls", (req, res) => {
   const userID = req.session['user_id'];
 
-  // If user is not logged in
-  if (!userID) {
-    res.status(401);
-    const templateVars = {
-      user: null,
-      error: {
-        statusCode: "401",
-        message: "Unauthorised access. You need to log in or register."
-      }
-    };
+  // Validate access for whether a user is logged in
+  const performChecks = { loggedIn: true };
+  const error = validateAccess(performChecks, userID, null, urlDatabase);
+  if (error) {
+    const templateVars = { error, user: users[userID] };
+    res.status(error.statusCode);
     res.render("error", templateVars);
     return;
   }
 
+  // Show user's urls if they are logged in
   const userURLs = urlsForUser(userID, urlDatabase);
-  const templateVars = {
-    user: users[userID],
-    urls: userURLs
-  };
-
+  const templateVars = { user: users[userID], urls: userURLs};
   res.render("urls_index", templateVars);
 });
 
-// READ: Display basic form page that allows user to submit URLs to be shortened
+// READ: DISPLAY BASIC FORM PAGE THAT ALLOWS USER TO SUBMIT URLS TO BE SHORTENED
 // Needs to be before /urls/:shortURL endpoint otherwise Express will think new is a route parameter
 app.get("/urls/new", (req, res) => {
   const userID = req.session['user_id'];
@@ -113,99 +106,54 @@ app.get("/urls/new", (req, res) => {
     res.redirect(`/login`);
     return;
   }
-  
-  const templateVars = {
-    user: users[userID],
-  };
+
+  const templateVars = { user: users[userID]};
   res.render("urls_new", templateVars);
 });
 
-// READ: Display a single URL and its shortened form along with a form to update a specific existing shortened URL in database
+// READ: DISPLAY A SINGLE URL AND ITS SHORTENED FORM ALONG WITH A FORM TO UPDATE A SPECIFIC EXISTING SHORTENED URL IN DATABASE
 app.get("/urls/:shortURL", (req, res) => {
   const userID = req.session['user_id'];
   const shortURL = req.params.shortURL;
 
-  // Check if resource exists
-  const resourceError = validateResource(shortURL, urlDatabase);
-  if (resourceError) {
-    const templateVars = { error: resourceError, user: users[userID] };
-    res.status(resourceError.statusCode);
-    res.render("error", templateVars);
-    return;
-  }
-
-  // If user is not logged in
-  if (!userID) {
-    res.status(401);
-    const templateVars = {
-      user: null,
-      error: {
-        statusCode: "401",
-        message: "Unauthorised access. You need to log in or register."
-      }
-    };
-    res.render("error", templateVars);
-    return;
-  }
-
-  // If user is logged in, check if shortURL belongs to current user
-  const longURL = urlDatabase[shortURL].longURL;
-  const userURLs = urlsForUser(userID, urlDatabase);
-  if (!userURLs[shortURL]) {
-    res.status(403);
-    const templateVars = {
-      user: users[userID],
-      error: {
-        statusCode: "403",
-        message: "Unauthorised access."
-      }
-    };
+  // Validate access for whether url is valid, if a user is logged in and if user owns the url
+  const performChecks = { validURL: true, loggedIn: true, urlOwner: true };
+  const error = validateAccess(performChecks, userID, shortURL, urlDatabase);
+  if (error) {
+    const templateVars = { error, user: users[userID] };
+    res.status(error.statusCode);
     res.render("error", templateVars);
     return;
   }
   
-  const templateVars = {
-    user: users[userID],
-    shortURL,
-    longURL
-  };
-
+  // Render page if user has access and there are no errors
+  const longURL = urlDatabase[shortURL].longURL;
+  const user = users[userID];
+  const templateVars = { user, shortURL, longURL };
   res.render("urls_show", templateVars);
 });
 
-// READ: Redirect any request to "/u/:shortURL" to its longURL
+// READ: REDIRECT ANY REQUEST TO "/U/:SHORTURL" TO ITS LONGURL
 app.get("/u/:shortURL", (req, res) => {
   const userID = req.session['user_id'];
   const shortURL = req.params.shortURL;
 
-  // Check if resource exists
-  const resourceError = validateResource(shortURL, urlDatabase);
-  if (resourceError) {
-    const templateVars = { error: resourceError, user: users[userID] };
-    res.status(resourceError.statusCode);
+  // Validate access for whether url is valid
+  const performChecks = { validURL: true };
+  const error = validateAccess(performChecks, userID, shortURL, urlDatabase);
+  if (error) {
+    const templateVars = { error, user: users[userID] };
+    res.status(error.statusCode);
     res.render("error", templateVars);
     return;
   }
 
-  // // Check if resource exists
-  // if (!urlDatabase[shortURL]) {
-  //   res.status(404);
-  //   const templateVars = {
-  //     user: users[userID],
-  //     error: {
-  //       statusCode: "404",
-  //       message: "ShortURL not found."
-  //     }
-  //   };
-  //   res.render("error", templateVars);
-  //   return;
-  // }
-
+  // If shortURL is valid, redirect to longURL site
   const longURL = urlDatabase[shortURL].longURL;
   res.redirect(longURL);
 });
 
-// READ: Display registration form
+// READ: DISPLAY REGISTRATION FORM
 app.get("/register", (req, res) => {
   const userID = req.session['user_id'];
 
@@ -219,7 +167,7 @@ app.get("/register", (req, res) => {
   res.render("register", templateVars);
 });
 
-// READ: Display login form
+// READ: DISPLAY LOGIN FORM
 app.get("/login", (req, res) => {
   const userID = req.session['user_id'];
 
@@ -233,12 +181,12 @@ app.get("/login", (req, res) => {
   res.render("login", templateVars);
 });
 
-// READ: For development purposes - JSON string representing the entire urlDatabase object
+// READ: FOR DEVELOPMENT PURPOSES - JSON STRING REPRESENTING THE ENTIRE URLDATABASE OBJECT
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
 
-// READ: For development purposes - JSON string representing the entire users object
+// READ: FOR DEVELOPMENT PURPOSES - JSON STRING REPRESENTING THE ENTIRE USERS OBJECT
 app.get("/users.json", (req, res) => {
   res.json(users);
 });
@@ -247,32 +195,28 @@ app.get("/users.json", (req, res) => {
 // POST REQUESTS --------------------------------------------
 /////////////////////////////////////////////////////////////
 
-// CREATE/POST: Handle the form submission to add the long URL to the database with an associated random shortURL and the current user
+// CREATE/POST: HANDLE THE FORM SUBMISSION TO ADD THE LONG URL TO THE DATABASE WITH AN ASSOCIATED RANDOM SHORTURL AND THE CURRENT USER
 app.post("/urls", (req, res) => {
   const userID = req.session['user_id'];
 
-  // If user is not logged in
-  if (!userID) {
-    res.status(401);
-    const templateVars = {
-      user: null,
-      error: {
-        statusCode: "401",
-        message: "Unauthorised access. You need to log in or register."
-      }
-    };
+  // Validate access for whether a user is logged in
+  const performChecks = { loggedIn: true };
+  const error = validateAccess(performChecks, userID, null, urlDatabase);
+  if (error) {
+    const templateVars = { error, user: users[userID] };
+    res.status(error.statusCode);
     res.render("error", templateVars);
     return;
   }
 
+  // Add new url to url list if user is logged in
   const shortURL = generateRandomString(6, urlDatabase, users);
   const longURL = req.body.longURL;
-  
   urlDatabase[shortURL] = { longURL, userID };
   res.redirect(`/urls/${shortURL}`);
 });
 
-// CREATE/POST: Handle user login and set a cookie with the user_id
+// CREATE/POST: HANDLE USER LOGIN AND SET A COOKIE WITH THE USER_ID
 app.post("/login", (req, res) => {
   const { email, password } = req.body;
   
@@ -290,7 +234,7 @@ app.post("/login", (req, res) => {
   res.redirect(`/urls`);
 });
 
-// CREATE/POST: Handle registration form data
+// CREATE/POST: HANDLE REGISTRATION FORM DATA
 app.post("/register", (req, res) => {
   const { email, password } = req.body;
   
@@ -318,41 +262,23 @@ app.post("/logout", (req, res) => {
 // PUT REQUESTS --------------------------------------------
 /////////////////////////////////////////////////////////////
 
-// UPDATE/PUT: Handle the update request from the home page
+// UPDATE/PUT: HANDLE THE UPDATE REQUEST FROM THE SHORTURL PAGE
 app.put("/urls/:shortURL", (req, res) => {
   const userID = req.session['user_id'];
   const shortURL = req.params.shortURL;
   const longURL = req.body.longURL;
 
-  // If user is not logged in
-  if (!userID) {
-    res.status(401);
-    const templateVars = {
-      user: null,
-      error: {
-        statusCode: "401",
-        message: "Unauthorised access. You need to log in or register."
-      }
-    };
+  // Validate access for whether a user is logged in and if user owns the url
+  const performChecks = { loggedIn: true, urlOwner: true };
+  const error = validateAccess(performChecks, userID, shortURL, urlDatabase);
+  if (error) {
+    const templateVars = { error, user: users[userID] };
+    res.status(error.statusCode);
     res.render("error", templateVars);
     return;
   }
 
-  // If user is logged in, check if shortURL belongs to current user
-  const userURLs = urlsForUser(userID, urlDatabase);
-  if (!userURLs[shortURL]) {
-    res.status(403);
-    const templateVars = {
-      user: users[userID],
-      error: {
-        statusCode: "403",
-        message: "Unauthorised access."
-      }
-    };
-    res.render("error", templateVars);
-    return;
-  }
-
+  // Update longURL for shortURL if url belongs to user
   urlDatabase[shortURL].longURL = longURL;
   res.redirect(`/urls`);
 });
@@ -361,41 +287,22 @@ app.put("/urls/:shortURL", (req, res) => {
 // DELETE REQUESTS --------------------------------------------
 /////////////////////////////////////////////////////////////
 
-// DELETE: Handle the form submission to remove a specific existing shortened URL from database
+// DELETE: HANDLE THE FORM SUBMISSION TO REMOVE A SPECIFIC EXISTING SHORTENED URL FROM DATABASE
 app.delete("/urls/:shortURL/delete", (req, res) => {
   const userID = req.session['user_id'];
   const shortURL = req.params.shortURL;
 
-  // If user is not logged in
-  if (!userID) {
-    res.status(401);
-    const templateVars = {
-      user: null,
-      error: {
-        statusCode: "401",
-        message: "Unauthorised access. You need to log in or register."
-      }
-    };
+  // Validate access for whether a user is logged in and if user owns the url
+  const performChecks = { loggedIn: true, urlOwner: true };
+  const error = validateAccess(performChecks, userID, shortURL, urlDatabase);
+  if (error) {
+    const templateVars = { error, user: users[userID] };
+    res.status(error.statusCode);
     res.render("error", templateVars);
     return;
   }
-
-  // If user is logged in, check if shortURL belongs to current user
-  const userURLs = urlsForUser(userID, urlDatabase);
-  if (!userURLs[shortURL]) {
-    res.status(403);
-    const templateVars = {
-      user: users[userID],
-      error: {
-        statusCode: "403",
-        message: "Unauthorised access."
-      }
-    };
-
-    res.render("error", templateVars);
-    return;
-  }
-
+  
+  // Delete shortURL data if user has access/is owner
   delete urlDatabase[shortURL];
   res.redirect(`/urls`);
 });

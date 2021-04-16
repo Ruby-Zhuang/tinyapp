@@ -66,6 +66,37 @@ const urlsForUser = (id, urlDatabase) => {
   return userURLs;
 };
 
+// Validate access of user based on conditions set in checks object and returns error object or data
+const validateAccess = (performChecks, userID, shortURL, urlDatabase) => {
+
+  // If specified, check if url is valid
+  if (performChecks.validURL) {
+    if (!urlDatabase[shortURL]) {
+      const error = { statusCode: 404, message: "ShortURL not found." };
+      return error;
+    }
+  }
+
+  // If specified, check if user is logged in
+  if (performChecks.loggedIn) {
+    if (!userID) {
+      const error = { statusCode: 401, message: "Unauthorised access. You need to log in or register." };
+      return error;
+    }
+  }
+
+  // If specified, check if shortURL belongs to current user
+  if (performChecks.urlOwner) {
+    const userURLs = urlsForUser(userID, urlDatabase);
+    if (!userURLs[shortURL]) {
+      const error = { statusCode: 403, message: "Unauthorised access." };
+      return error;
+    }
+  }
+
+  return null;
+};
+
 // Validate the login of a user
 const validateLogin = (email, password, usersDatabase) => {
   // Error if either email or password fields are empty
@@ -113,18 +144,10 @@ const validateRegister = (email, password, usersDatabase, urlDatabase) => {
   return { error: null, data: newUser };
 };
 
-const validateResource = (shortURL, urlDatabase) => {
-  if (!urlDatabase[shortURL]) {
-    const error = { statusCode: 404, message: "ShortURL not found." };
-    return error;
-  }
-  return null;
-};
-
 module.exports = {
   generateRandomString,
   urlsForUser,
+  validateAccess,
   validateLogin,
   validateRegister,
-  validateResource
 };
