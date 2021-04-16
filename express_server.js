@@ -44,7 +44,7 @@ const urlDatabase = {
 // GET REQUESTS ---------------------------------------------
 /////////////////////////////////////////////////////////////
 
-// READ: REDIRECT TO DISPLAY ALL THE URLS IF USER GOES TO ROOT
+// READ: REDIRECT TO DISPLAY ALL THE URLS OR LOGIN PAGE IF USER GOES TO ROOT
 app.get("/", (req, res) => {
   const userID = req.session['user_id'];
   if (userID) {
