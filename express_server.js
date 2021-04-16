@@ -27,40 +27,17 @@ app.set("view engine", "ejs");
 // DATABASES ------------------------------------------------
 /////////////////////////////////////////////////////////////
 const users = {
-  "userRandomID": {
-    id: "userRandomID",
-    email: "user@example.com",
-    password: bcrypt.hashSync("purple-monkey-dinosaur", saltRounds)
-  },
-  "user2RandomID": {
-    id: "user2RandomID",
-    email: "user2@example.com",
-    password: bcrypt.hashSync("dishwasher-funk", saltRounds)
-  },
-  "aJ48lW": {
-    id: "aJ48lW",
-    email: "user3@example.com",
-    password: bcrypt.hashSync("123456", saltRounds)
-  }
+  /**
+   * Database structure
+   * id: { id, email, password }
+   */
 };
 
 const urlDatabase = {
-  b6UTxQ: {
-    longURL: "https://www.tsn.ca",
-    userID: "userRandomID"
-  },
-  i3BoGr: {
-    longURL: "https://www.google.ca",
-    userID: "userRandomID"
-  },
-  b2xVn2: {
-    longURL: "http://www.netflix.com",
-    userID: "aJ48lW"
-  },
-  sgq3y6: {
-    longURL: "http://www.lighthouselabs.ca",
-    userID: "userRandomID"
-  }
+  /**
+   * Database structure
+   * shortURL: { longURL, userID }
+   */
 };
 
 /////////////////////////////////////////////////////////////
@@ -185,7 +162,6 @@ app.get("/login", (req, res) => {
 /////////////////////////////////////////////////////////////
 // POST REQUESTS --------------------------------------------
 /////////////////////////////////////////////////////////////
-
 // CREATE: HANDLE THE FORM SUBMISSION TO ADD LONGURL TO THE DATABASE WITH AN ASSOCIATED RANDOM SHORTURL AND THE CURRENT USER
 app.post("/urls", (req, res) => {
   const userID = req.session['user_id'];
@@ -252,7 +228,6 @@ app.post("/logout", (req, res) => {
 /////////////////////////////////////////////////////////////
 // PUT REQUESTS --------------------------------------------
 /////////////////////////////////////////////////////////////
-
 // UPDATE: HANDLE THE UPDATE REQUEST FROM THE SHORTURL PAGE
 app.put("/urls/:shortURL", (req, res) => {
   const userID = req.session['user_id'];
@@ -277,7 +252,6 @@ app.put("/urls/:shortURL", (req, res) => {
 /////////////////////////////////////////////////////////////
 // DELETE REQUESTS --------------------------------------------
 /////////////////////////////////////////////////////////////
-
 // DELETE: HANDLE THE FORM SUBMISSION TO REMOVE A SPECIFIC EXISTING SHORTENED URL FROM DATABASE
 app.delete("/urls/:shortURL/delete", (req, res) => {
   const userID = req.session['user_id'];
@@ -301,7 +275,6 @@ app.delete("/urls/:shortURL/delete", (req, res) => {
 /////////////////////////////////////////////////////////////
 // SERVER FUNCTION ------------------------------------------
 /////////////////////////////////////////////////////////////
-
 app.listen(PORT, () => {
   console.log(`TinyApp listening on port ${PORT}!`);
 });
