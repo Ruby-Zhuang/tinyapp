@@ -5,8 +5,6 @@ const PORT = 8080;
 const express = require("express");
 const bodyParser = require("body-parser");
 const cookieSession = require('cookie-session');
-const bcrypt = require('bcrypt');
-const saltRounds = 10;
 const methodOverride = require('method-override');
 const { generateRandomString, urlsForUser, validateAccess, validateLogin, validateRegister } = require('./helpers');
 
@@ -43,7 +41,6 @@ const urlDatabase = {
 /////////////////////////////////////////////////////////////
 // GET REQUESTS ---------------------------------------------
 /////////////////////////////////////////////////////////////
-
 // READ: REDIRECT TO DISPLAY ALL THE URLS OR LOGIN PAGE IF USER GOES TO ROOT
 app.get("/", (req, res) => {
   const userID = req.session['user_id'];
@@ -250,7 +247,7 @@ app.put("/urls/:shortURL", (req, res) => {
 });
 
 /////////////////////////////////////////////////////////////
-// DELETE REQUESTS --------------------------------------------
+// DELETE REQUESTS ------------------------------------------
 /////////////////////////////////////////////////////////////
 // DELETE: HANDLE THE FORM SUBMISSION TO REMOVE A SPECIFIC EXISTING SHORTENED URL FROM DATABASE
 app.delete("/urls/:shortURL/delete", (req, res) => {

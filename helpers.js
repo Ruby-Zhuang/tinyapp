@@ -7,7 +7,6 @@ const saltRounds = 10;
 /////////////////////////////////////////////////////////////
 // HELPER FUNCTIONS -----------------------------------------
 /////////////////////////////////////////////////////////////
-
 // CREATE A NEW USER
 const createNewUser = (email, password, usersDatabase, urlDatabase) => {
   const newUserID = generateRandomString(6, urlDatabase, usersDatabase);
@@ -68,7 +67,6 @@ const urlsForUser = (id, urlDatabase) => {
 
 // VALIDATE ACCESS OF USER BASED ON CONDITIONS SET IN PERFORMCHECKS OBJECT AND RETURNS ERROR IF ANY
 const validateAccess = (performChecks, userID, shortURL, urlDatabase) => {
-
   // If specified, check if shortURL is valid
   if (performChecks.validURL) {
     if (!urlDatabase[shortURL]) {
