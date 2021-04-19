@@ -68,7 +68,7 @@ const urlsForUser = (id, urlDatabase) => {
 // VALIDATE ACCESS OF USER BASED ON CONDITIONS SET IN PERFORMCHECKS OBJECT AND RETURNS ERROR IF ANY
 const validateAccess = (performChecks, userID, shortURL, urlDatabase) => {
   // If specified, check if shortURL is valid
-  if (performChecks.validURL) {
+  if (performChecks.validShortURL) {
     if (!urlDatabase[shortURL]) {
       const error = { statusCode: 404, message: "ShortURL not found." };
       return error;

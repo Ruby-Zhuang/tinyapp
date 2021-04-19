@@ -2,10 +2,11 @@
 // CONSTANTS, MODULES & DEPENDENCIES ------------------------
 /////////////////////////////////////////////////////////////
 const PORT = 8080;
-const express = require("express");
-const bodyParser = require("body-parser");
+const express = require('express');
+const bodyParser = require('body-parser');
 const cookieSession = require('cookie-session');
 const methodOverride = require('method-override');
+const { users, urlDatabase } = require('./databases');
 const { generateRandomString, urlsForUser, validateAccess, validateLogin, validateRegister } = require('./helpers');
 
 /////////////////////////////////////////////////////////////
@@ -24,19 +25,19 @@ app.set("view engine", "ejs");
 /////////////////////////////////////////////////////////////
 // DATABASES ------------------------------------------------
 /////////////////////////////////////////////////////////////
-const users = {
-  /**
-   * Database structure
-   * id: { id, email, password }
-   */
-};
+// const users = {
+//   /**
+//    * Database structure
+//    * id: { id, email, password }
+//    */
+// };
 
-const urlDatabase = {
-  /**
-   * Database structure
-   * shortURL: { longURL, userID }
-   */
-};
+// const urlDatabase = {
+//   /**
+//    * Database structure
+//    * shortURL: { longURL, userID }
+//    */
+// };
 
 /////////////////////////////////////////////////////////////
 // GET REQUESTS ---------------------------------------------
@@ -92,7 +93,7 @@ app.get("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
 
   // Validate access for whether shortURL is valid, if a user is logged in and if user owns the shortURL
-  const performChecks = { validURL: true, loggedIn: true, urlOwner: true };
+  const performChecks = { validShortURL: true, loggedIn: true, urlOwner: true };
   const error = validateAccess(performChecks, userID, shortURL, urlDatabase);
   if (error) {
     const templateVars = { error, user: users[userID] };
@@ -114,7 +115,7 @@ app.get("/u/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
 
   // Validate access for whether shortURL is valid
-  const performChecks = { validURL: true };
+  const performChecks = { validShortURL: true };
   const error = validateAccess(performChecks, userID, shortURL, urlDatabase);
   if (error) {
     const templateVars = { error, user: users[userID] };
@@ -223,7 +224,7 @@ app.post("/logout", (req, res) => {
 });
 
 /////////////////////////////////////////////////////////////
-// PUT REQUESTS --------------------------------------------
+// PUT REQUESTS ---------------------------------------------
 /////////////////////////////////////////////////////////////
 // UPDATE: HANDLE THE UPDATE REQUEST FROM THE SHORTURL PAGE
 app.put("/urls/:shortURL", (req, res) => {
